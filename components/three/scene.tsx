@@ -15,9 +15,9 @@ const FLOWER = "/models/small_flower._polycam_app.glb" // user-supplied
 const LAMP = "/models/desk_lamp.glb" // user-supplied
 const FRAME = "/models/photo_frame.glb" // user-supplied
 const PORTRAIT = "/images/portrait.jpg"
-const FRAME_PIC = "Plane_0" // the picture surface inside the frame
+const FRAME_PIC_MAT = "Material.002" // the picture material (holds the default photo)
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
-const SCREEN_MESH = "Object_82" // the emissive display — recolored black so the name panel blends
+const SCREEN_MESH = "Object_123" // the emissive display (lid) — recolored black so the name panel blends
 
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
@@ -106,9 +106,17 @@ function usePhotoFrame(size: number) {
   return useMemo(() => {
     photo.colorSpace = THREE.SRGBColorSpace
     photo.flipY = false // glTF UV convention
+    photo.center.set(0.5, 0.5)
+    photo.rotation = Math.PI // correct the phone photo's orientation
     const object = scene.clone(true)
-    const pic = object.getObjectByName(FRAME_PIC) as THREE.Mesh | undefined
-    if (pic) pic.material = new THREE.MeshStandardMaterial({ map: photo, roughness: 0.5, metalness: 0 })
+    // Match by material name — glTF sanitizes node names (dots removed), so
+    // getObjectByName("Plane.001_0") is unreliable. The picture uses Material.002.
+    object.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (m.isMesh && (m.material as THREE.Material | undefined)?.name === FRAME_PIC_MAT) {
+        m.material = new THREE.MeshStandardMaterial({ map: photo, roughness: 0.5, metalness: 0 })
+      }
+    })
     const box = new THREE.Box3().setFromObject(object)
     const s = new THREE.Vector3()
     const c = new THREE.Vector3()
