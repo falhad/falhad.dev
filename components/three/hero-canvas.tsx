@@ -4,10 +4,10 @@ import { useState } from "react"
 import { Canvas } from "@react-three/fiber"
 import * as THREE from "three"
 import ParticleField from "./particle-field"
-import ProjectConstellation from "./project-constellation"
-import ProjectDetail from "./project-detail"
+import ExperienceConstellation from "./experience-constellation"
+import ExperienceDetail from "./experience-detail"
 import CameraRig from "./camera-rig"
-import type { Project } from "@/lib/portfolio-data"
+import type { Experience } from "@/lib/portfolio-data"
 
 type Props = {
   reducedMotion?: boolean
@@ -15,8 +15,10 @@ type Props = {
 
 // The interactive 3D layer of the hero. Rendered client-only (see hero.tsx)
 // because three.js touches `window` at module-eval time.
+// The scene is a timeline: companies float along the depth axis, present near,
+// past receding into the fog. Click a node to fly to that career chapter.
 export default function HeroCanvas({ reducedMotion = false }: Props) {
-  const [selected, setSelected] = useState<Project | null>(null)
+  const [selected, setSelected] = useState<Experience | null>(null)
 
   return (
     <>
@@ -36,11 +38,11 @@ export default function HeroCanvas({ reducedMotion = false }: Props) {
         <pointLight position={[0, 2, 8]} intensity={20} color="#ffffff" />
 
         <ParticleField count={reducedMotion ? 500 : 1400} />
-        <ProjectConstellation onSelect={setSelected} activeName={selected?.name ?? null} />
-        <CameraRig target={selected?.position ?? null} reducedMotion={reducedMotion} />
+        <ExperienceConstellation onSelect={setSelected} activeCompany={selected?.company ?? null} />
+        <CameraRig target={selected?.scenePos ?? null} reducedMotion={reducedMotion} />
       </Canvas>
 
-      <ProjectDetail project={selected} onClose={() => setSelected(null)} />
+      <ExperienceDetail exp={selected} onClose={() => setSelected(null)} />
     </>
   )
 }

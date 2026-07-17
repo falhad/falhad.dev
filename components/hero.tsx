@@ -114,7 +114,7 @@ export default function Hero() {
 
             {enable3D && (
               <p className="mt-6 text-xs text-white/40">
-                Tip: move your mouse, and click a glowing node to explore a project.
+                Tip: move your mouse — each glowing node is a chapter of my career. Click one to explore.
               </p>
             )}
           </div>

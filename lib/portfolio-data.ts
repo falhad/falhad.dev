@@ -19,6 +19,11 @@ export type Experience = {
   location?: string
   date: string
   responsibilities: string[]
+  // Short period label shown on the 3D timeline node (e.g. "2023 — Now").
+  when?: string
+  // Position on the 3D timeline. z encodes time: nearer (higher z) = more recent.
+  scenePos?: [number, number, number]
+  color?: string
 }
 
 export type SkillCategory = {
@@ -201,6 +206,9 @@ export const experiences: Experience[] = [
     position: "Senior Software Developer",
     location: "Muscat, Oman",
     date: "Oct 2023 to Present",
+    when: "2023 — Now",
+    scenePos: [-2.6, 2.6, 1.5],
+    color: "#e879f9",
     responsibilities: [
       "Improved system performance by 40% through code optimization",
       "Implemented WebRTC for real-time video streaming of rig activities",
@@ -213,6 +221,9 @@ export const experiences: Experience[] = [
     company: "Farabin",
     position: "Senior Software Developer",
     date: "May 2022 to Aug 2023",
+    when: "2022 — 23",
+    scenePos: [3.2, 1.8, 0.5],
+    color: "#22d3ee",
     responsibilities: [
       "Designed and developed a web and mobile application for Equipment Inspection and Lifecycle Management for NIOC",
       "Built a user management system with role-based access control",
@@ -227,6 +238,9 @@ export const experiences: Experience[] = [
     position: "CTO",
     location: "Tehran, Iran",
     date: "Apr 2021 to March 2023",
+    when: "2021 — 23",
+    scenePos: [4.0, 0.2, -1.0],
+    color: "#a78bfa",
     responsibilities: [
       "Developed an advanced stock market analysis platform using Python and AI",
       "Led DevOps initiatives to optimize deployment pipelines and monitor infrastructure",
@@ -238,6 +252,9 @@ export const experiences: Experience[] = [
     position: "Team Lead",
     location: "Yazd, Iran",
     date: "May 2020 to March 2021",
+    when: "2020 — 21",
+    scenePos: [3.4, -1.6, -2.0],
+    color: "#34d399",
     responsibilities: [
       "Designed and implemented a blockchain-based platform for water share tokenization",
       "Enhanced system reliability and scalability through performance optimization",
@@ -249,6 +266,9 @@ export const experiences: Experience[] = [
     position: "Fullstack Developer",
     location: "Yazd, Iran",
     date: "Mar 2019 to Jan 2020",
+    when: "2019 — 20",
+    scenePos: [1.8, -3.0, -3.5],
+    color: "#f59e0b",
     responsibilities: [
       "Designed a platform for efficient tile and stone sales, with supply-chain tracking",
     ],
@@ -258,6 +278,9 @@ export const experiences: Experience[] = [
     position: "Mentor / Full-stack Developer",
     location: "Yazd, Iran",
     date: "Jun 2015 to Feb 2019",
+    when: "2015 — 19",
+    scenePos: [4.6, 1.0, -4.5],
+    color: "#38bdf8",
     responsibilities: [
       "Mentored startup teams, sharing insights from software development and deployment",
       "Developed a Vue-based automated cryptocurrency trading assistant and a Java-based Android social platform",
@@ -269,6 +292,9 @@ export const experiences: Experience[] = [
     position: "Developer",
     location: "Yazd, Iran",
     date: "Oct 2014 to Nov 2015",
+    when: "2014 — 15",
+    scenePos: [2.6, 2.8, -6.0],
+    color: "#fb7185",
     responsibilities: [
       "Developed a web application to manage parking access and route permissions",
       "Improved parking system efficiency by enhancing security and simplifying workflows",
