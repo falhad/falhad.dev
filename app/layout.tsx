@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter, Bricolage_Grotesque } from "next/font/google"
 import "./globals.css"
 import type React from "react"
@@ -12,7 +12,11 @@ export const metadata: Metadata = {
   description:
     "Farhad Navayazdan — Senior Software Developer with 14+ years building real-time monitoring systems, blockchain, and AI platforms for the oil & gas sector and beyond.",
   generator: "Next.js",
-  viewport: { width: "device-width", initialScale: 1 },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
