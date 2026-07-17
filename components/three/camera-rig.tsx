@@ -4,50 +4,54 @@ import { useRef, type MutableRefObject } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 
+type Vec3 = [number, number, number]
+
 type Props = {
-  target: [number, number, number] | null
+  /** Explicitly framed planet (from a click); overrides scroll. */
+  target: Vec3 | null
+  /** All planet positions, in scroll order. */
+  planets: Vec3[]
   reducedMotion?: boolean
-  // 0..1 scroll progress through the pinned hero. Drives the fly-through when
-  // nothing is selected. Null/absent => camera rests at the home framing.
+  /** 0..1 scroll progress; snaps the camera planet-by-planet. */
   progressRef?: MutableRefObject<number>
 }
 
+const OVERVIEW_POS = new THREE.Vector3(0, 0.4, 11)
+const OVERVIEW_LOOK = new THREE.Vector3(0, 0, -3)
 const HOME = new THREE.Vector3(0, 0, 9)
 const ORIGIN = new THREE.Vector3(0, 0, 0)
 
-// Camera z travels from the present (near) to the deep past as you scroll.
-const Z_NEAR = 10.5
-const Z_FAR = -17
+// Frame a planet: sit partway toward it, pulled in along +z so it fills center
+// while its neighbours stay visible for context.
+function frame(v: Vec3, pos: THREE.Vector3, look: THREE.Vector3) {
+  pos.set(v[0] * 0.55, v[1] * 0.55, v[2] + 5)
+  look.set(v[0], v[1], v[2])
+}
 
-// Unifies two camera drivers:
-//  - scroll progress flies the camera down the timeline corridor, and
-//  - selecting a node overrides that to frame the chosen chapter.
-// Closing the panel (target -> null) eases back to the current scroll position.
-export default function CameraRig({ target, reducedMotion = false, progressRef }: Props) {
+export default function CameraRig({ target, planets, reducedMotion = false, progressRef }: Props) {
   const lookAt = useRef(new THREE.Vector3(0, 0, 0))
   const desiredPos = useRef(new THREE.Vector3())
   const desiredLook = useRef(new THREE.Vector3())
 
   useFrame((state, delta) => {
     if (target) {
-      // Frame the selected node: sit partway toward it, pulled in along +z.
-      const [x, y, z] = target
-      desiredPos.current.set(x * 0.55, y * 0.55, z + 5)
-      desiredLook.current.set(x, y, z)
-    } else if (progressRef) {
-      // Fly-through driven by scroll.
+      frame(target, desiredPos.current, desiredLook.current)
+    } else if (progressRef && planets.length) {
       const p = progressRef.current
-      const camZ = THREE.MathUtils.lerp(Z_NEAR, Z_FAR, p)
-      const sway = Math.sin(p * Math.PI) * 0.8
-      desiredPos.current.set(sway, 0.4, camZ)
-      desiredLook.current.set(sway * 0.4, 0.2, camZ - 6)
+      if (p < 0.04) {
+        // brief galaxy overview before you start scrolling
+        desiredPos.current.copy(OVERVIEW_POS)
+        desiredLook.current.copy(OVERVIEW_LOOK)
+      } else {
+        const i = Math.round(p * (planets.length - 1))
+        frame(planets[Math.min(i, planets.length - 1)], desiredPos.current, desiredLook.current)
+      }
     } else {
       desiredPos.current.copy(HOME)
       desiredLook.current.copy(ORIGIN)
     }
 
-    // Frame-rate independent easing; snap instantly under reduced motion.
-    const t = reducedMotion ? 1 : 1 - Math.pow(0.0016, delta)
+    const t = reducedMotion ? 1 : 1 - Math.pow(0.0018, delta)
     state.camera.position.lerp(desiredPos.current, t)
     lookAt.current.lerp(desiredLook.current, t)
     state.camera.lookAt(lookAt.current)

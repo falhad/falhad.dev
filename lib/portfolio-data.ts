@@ -400,3 +400,99 @@ export const stats = [
   { value: "40%", label: "Perf gains delivered" },
   { value: "∞", label: "Coffees consumed" },
 ]
+
+// Each planet in the 3D scene is a skill area. Clicking one reveals the projects
+// shipped with it and the roles where it was applied. `projects` values match
+// entries in `projects` above; `roles` reference companies in `experiences`.
+export type SkillPlanet = {
+  name: string
+  code: string // mono callsign shown on the planet
+  color: string
+  scenePos: [number, number, number]
+  blurb: string
+  tech: string[]
+  projects: string[]
+  roles: { company: string; note: string }[]
+}
+
+// Ordered near -> far so scrolling advances planet by planet, present-most first.
+export const skillPlanets: SkillPlanet[] = [
+  {
+    name: "Real-time & Streaming",
+    code: "REALTIME",
+    color: "#e879f9",
+    scenePos: [-2.0, 2.2, 1.5],
+    blurb:
+      "Live rig monitoring at scale — real-time video and WITS telemetry delivered with sub-second latency for distributed teams.",
+    tech: ["WebRTC", "Socket.IO", "WITS", "Netty", "Video Optimization"],
+    projects: ["AI Energy"],
+    roles: [{ company: "Esbaar", note: "WebRTC rig video + Socket.IO WITS streaming; +40% perf" }],
+  },
+  {
+    name: "Mobile Engineering",
+    code: "MOBILE",
+    color: "#22d3ee",
+    scenePos: [2.6, 1.2, -1.5],
+    blurb:
+      "Native and cross-platform apps — from a menu platform serving 14,000+ restaurants to field inspection tooling.",
+    tech: ["Kotlin", "Flutter", "Dart", "Jetpack Compose", "KMP"],
+    projects: ["QMenu", "Sipan", "Biratex"],
+    roles: [
+      { company: "Farabin", note: "NIOC equipment-inspection mobile app" },
+      { company: "Sandbad Accelerator", note: "Android social platform & crypto trading assistant" },
+    ],
+  },
+  {
+    name: "Backend & AI",
+    code: "BACKEND",
+    color: "#a78bfa",
+    scenePos: [-2.8, -0.4, -4.0],
+    blurb:
+      "Scalable, event-driven services and AI platforms — from stock-market analytics to energy forecasting.",
+    tech: ["Python", "Spring Boot", "FastAPI", "Django", "Event-driven"],
+    projects: ["AI Energy", "Biratex", "Sipan"],
+    roles: [
+      { company: "Biratex Co.", note: "AI stock-analysis platform, as CTO" },
+      { company: "Esbaar", note: "backend refactor, +40% performance" },
+    ],
+  },
+  {
+    name: "Frontend & UX",
+    code: "FRONTEND",
+    color: "#f59e0b",
+    scenePos: [2.8, 1.0, -6.5],
+    blurb:
+      "Dashboards and product UIs — real-time monitoring consoles and modern web apps that operators actually enjoy.",
+    tech: ["React", "Next.js", "TypeScript"],
+    projects: ["AI Energy"],
+    roles: [
+      { company: "Esbaar", note: "React dashboard & UI redesign" },
+      { company: "Farabin", note: "inspection dashboards & reports" },
+    ],
+  },
+  {
+    name: "Blockchain",
+    code: "CHAIN",
+    color: "#34d399",
+    scenePos: [-2.4, -0.6, -9.0],
+    blurb:
+      "Tokenization and decentralized platforms — a water-share trading system integrated by Mapna MD3.",
+    tech: ["Smart Contracts", "Blockchain", "Web3", "Solidity"],
+    projects: ["Parswater"],
+    roles: [{ company: "Parswater", note: "blockchain water tokenization, as team lead" }],
+  },
+  {
+    name: "Infra & Networking",
+    code: "INFRA",
+    color: "#38bdf8",
+    scenePos: [2.2, 1.2, -11.5],
+    blurb:
+      "CCNP-level networking plus DevOps — CI/CD pipelines, containers and data stores running reliably at scale.",
+    tech: ["Docker", "Kubernetes", "CI/CD", "PostgreSQL", "Redis", "Neo4j", "CCNP"],
+    projects: [],
+    roles: [
+      { company: "Biratex Co.", note: "CI/CD, Docker/Kubernetes, DevOps" },
+      { company: "Esbaar", note: "infrastructure & system optimization" },
+    ],
+  },
+]

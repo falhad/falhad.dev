@@ -4,26 +4,26 @@ import { useState, type MutableRefObject } from "react"
 import { Canvas } from "@react-three/fiber"
 import * as THREE from "three"
 import ParticleField from "./particle-field"
-import ExperienceConstellation from "./experience-constellation"
-import ExperienceDetail from "./experience-detail"
+import SkillGalaxy from "./skill-galaxy"
+import SkillDetail from "./skill-detail"
 import CameraRig from "./camera-rig"
 import Nebula from "./nebula"
 import Effects from "./effects"
-import type { Experience } from "@/lib/portfolio-data"
+import { skillPlanets, type SkillPlanet } from "@/lib/portfolio-data"
 
 type Props = {
   reducedMotion?: boolean
-  // 0..1 scroll progress through the pinned hero, driving the timeline fly-through.
+  // 0..1 scroll progress through the pinned hero, snapping planet by planet.
   progressRef?: MutableRefObject<number>
 }
 
 // The interactive 3D layer of the hero. Rendered client-only (see hero.tsx)
 // because three.js touches `window` at module-eval time.
-// A cinematic deep-space timeline: companies are glowing stars along the depth
-// axis, present near, past receding into nebula and fog. Real bloom (see Effects)
-// makes the emissive cores read as light rather than shaded geometry.
+// A cinematic skill galaxy: each glowing planet is a skill area. Scroll advances
+// planet by planet; click one to reveal the projects and experience behind it.
 export default function HeroCanvas({ reducedMotion = false, progressRef }: Props) {
-  const [selected, setSelected] = useState<Experience | null>(null)
+  const [selected, setSelected] = useState<SkillPlanet | null>(null)
+  const positions = skillPlanets.map((p) => p.scenePos)
 
   return (
     <>
@@ -33,7 +33,6 @@ export default function HeroCanvas({ reducedMotion = false, progressRef }: Props
         gl={{ antialias: true, powerPreference: "high-performance" }}
         camera={{ position: [0, 0, 9], fov: 50 }}
         onCreated={({ scene }) => {
-          // Solid background (not alpha) so the bloom pass composites cleanly.
           scene.background = new THREE.Color("#05010f")
           scene.fog = new THREE.FogExp2("#05010f", 0.05)
         }}
@@ -45,13 +44,18 @@ export default function HeroCanvas({ reducedMotion = false, progressRef }: Props
 
         <Nebula />
         <ParticleField count={reducedMotion ? 600 : 1600} />
-        <ExperienceConstellation onSelect={setSelected} activeCompany={selected?.company ?? null} />
-        <CameraRig target={selected?.scenePos ?? null} reducedMotion={reducedMotion} progressRef={progressRef} />
+        <SkillGalaxy onSelect={setSelected} selectedName={selected?.name ?? null} progressRef={progressRef} />
+        <CameraRig
+          target={selected?.scenePos ?? null}
+          planets={positions}
+          reducedMotion={reducedMotion}
+          progressRef={progressRef}
+        />
 
         <Effects reducedMotion={reducedMotion} />
       </Canvas>
 
-      <ExperienceDetail exp={selected} onClose={() => setSelected(null)} />
+      <SkillDetail planet={selected} onClose={() => setSelected(null)} />
     </>
   )
 }

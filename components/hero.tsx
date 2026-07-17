@@ -159,7 +159,7 @@ export default function Hero() {
             className="hero-cue pointer-events-auto absolute bottom-5 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-white/45 transition hover:text-white"
           >
             <span className="mono text-[0.6rem] uppercase tracking-[0.3em]">
-              {enableScroll ? "scroll to travel" : "scroll"}
+              {enableScroll ? "scroll · skill by skill" : "scroll"}
             </span>
             <ChevronDown className="h-4 w-4 animate-bounce" />
           </a>
