@@ -195,7 +195,6 @@ const SCREEN_SIZE: [number, number] = [2.46, 1.56]
 function Sequence() {
   const laptop = useRef<THREE.Group>(null)
   const nameMat = useRef<THREE.MeshBasicMaterial>(null)
-  const glow = useRef<THREE.PointLight>(null)
   const { pointer } = useThree()
   const px = useRef(0)
   const py = useRef(0)
@@ -236,11 +235,8 @@ function Sequence() {
     if (pivot) pivot.rotation.x = lerp(LID_CLOSED, 0, smooth(invlerp(p, 0.15, 0.6)))
     if (laptop.current) laptop.current.rotation.y = px.current * 0.05
 
-    // Name — and the screen's glow — come up only once the lid is open, so the
-    // glow never lights the closed lid from point-blank range.
-    const on = smooth(invlerp(p, 0.5, 0.72))
-    if (nameMat.current) nameMat.current.opacity = on
-    if (glow.current) glow.current.intensity = on * 4
+    // Name fades onto the screen once the lid is most of the way open.
+    if (nameMat.current) nameMat.current.opacity = smooth(invlerp(p, 0.5, 0.72))
   })
 
   return (
@@ -252,8 +248,6 @@ function Sequence() {
           <planeGeometry args={SCREEN_SIZE} />
           <meshBasicMaterial ref={nameMat} map={nameTex} transparent opacity={0} toneMapped={false} />
         </mesh>
-        {/* Cool glow spilling from the screen — only lit when open. */}
-        <pointLight ref={glow} position={[0, 0.7, 0.5]} intensity={0} distance={3.5} decay={2} color="#bcd2ff" />
       </group>
       <primitive object={mug} position={MUG_POS} />
       <primitive object={notebook} position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT} />
@@ -291,13 +285,15 @@ export default function Scene() {
       <Canvas shadows camera={{ position: [0, 8.0, 2.6], fov: 42 }} dpr={[1, 1.9]} gl={{ antialias: true, alpha: true, toneMappingExposure: 0.78 }}>
         {/* Dark room: only a faint cool ambient fills the shadows. */}
         <ambientLight intensity={0.18} color="#4a4640" />
-        {/* The desk lamp is the key light — a warm cone pooling on the desk. */}
+        {/* The desk lamp is the key light — placed just under the lamp head and
+            aimed down at the desk, so the light comes from beneath the head
+            (not glowing on the head itself). */}
         <spotLight
-          position={[2.55, 2.75, -0.35]}
-          angle={0.92}
-          penumbra={0.82}
-          intensity={78}
-          distance={20}
+          position={[2.5, 1.95, -0.5]}
+          angle={0.95}
+          penumbra={0.85}
+          intensity={58}
+          distance={18}
           decay={2}
           color="#ffd9a0"
           castShadow
@@ -309,7 +305,7 @@ export default function Scene() {
           <Environment preset="apartment" environmentIntensity={0.32} />
         </Suspense>
         <EffectComposer>
-          <Bloom intensity={0.16} luminanceThreshold={0.85} luminanceSmoothing={0.9} mipmapBlur />
+          <Bloom intensity={0.1} luminanceThreshold={0.92} luminanceSmoothing={0.9} mipmapBlur />
         </EffectComposer>
       </Canvas>
     </div>
