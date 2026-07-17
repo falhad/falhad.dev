@@ -24,8 +24,12 @@ function hasWebGL() {
   }
 }
 
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
+
 export default function Hero() {
   const rootRef = useRef<HTMLElement | null>(null)
+  const overlayRef = useRef<HTMLDivElement | null>(null)
+  const progressRef = useRef(0)
   const [enable3D, setEnable3D] = useState(false)
   const [reduced, setReduced] = useState(false)
 
@@ -34,6 +38,37 @@ export default function Hero() {
     setReduced(prefersReduced)
     setEnable3D(hasWebGL())
   }, [])
+
+  // When the fly-through is enabled, the section is tall and pinned. We only
+  // READ scroll position (never hijack the wheel), so Lenis keeps owning scroll.
+  const enableScroll = enable3D && !reduced
+
+  useEffect(() => {
+    if (!enableScroll) {
+      progressRef.current = 0
+      return
+    }
+    let raf = 0
+    const tick = () => {
+      const el = rootRef.current
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        const total = rect.height - window.innerHeight
+        const p = total > 0 ? clamp(-rect.top / total, 0, 1) : 0
+        progressRef.current = p
+        const overlay = overlayRef.current
+        if (overlay) {
+          overlay.style.opacity = String(1 - clamp(p / 0.14, 0, 1))
+          overlay.style.transform = `translateY(${-p * 50}px)`
+          // Remove from hit-testing once faded so it can't ghost-click nodes.
+          overlay.style.display = p > 0.22 ? "none" : ""
+        }
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [enableScroll])
 
   useEffect(() => {
     if (!rootRef.current) return
@@ -52,81 +87,89 @@ export default function Hero() {
   return (
     <section
       ref={rootRef}
-      className="relative min-h-[100svh] overflow-hidden bg-[#05010f] text-white"
+      className={`relative bg-[#05010f] text-white ${enableScroll ? "" : "min-h-[100svh]"}`}
+      style={enableScroll ? { height: "300vh" } : undefined}
     >
-      {/* 3D interactive background (or a static gradient fallback) */}
-      <div className="absolute inset-0">
-        {enable3D ? (
-          <HeroCanvas reducedMotion={reduced} />
-        ) : (
-          <div className="absolute inset-0">
-            <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-fuchsia-500/30 blur-3xl" />
-            <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-cyan-500/30 blur-3xl" />
-          </div>
-        )}
-      </div>
-
-      {/* Readability veil so text pops over the scene */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(5,1,15,0.75)_100%)]"
-      />
-
-      {/* Overlay content — pointer-events off so nodes stay clickable, re-enabled per element */}
-      <div className="pointer-events-none relative z-10 flex min-h-[100svh] flex-col justify-center">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl text-center md:text-left">
-            <div className="hero-badge pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/20 backdrop-blur">
-              <Sparkles className="h-4 w-4 text-yellow-300" />
-              <span className="text-xs uppercase tracking-wider text-white/80">Hello, I’m</span>
+      <div className="sticky top-0 h-[100svh] overflow-hidden">
+        {/* 3D interactive background (or a static gradient fallback) */}
+        <div className="absolute inset-0">
+          {enable3D ? (
+            <HeroCanvas reducedMotion={reduced} progressRef={enableScroll ? progressRef : undefined} />
+          ) : (
+            <div className="absolute inset-0">
+              <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-fuchsia-500/30 blur-3xl" />
+              <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-cyan-500/30 blur-3xl" />
             </div>
-
-            <h1 className="hero-title mt-4 text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl lg:text-7xl">
-              <span className="bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                {profile.name}
-              </span>
-            </h1>
-            <p className="hero-subtitle mt-3 text-lg text-white/80 sm:text-xl">{profile.title}</p>
-            <p className="hero-desc mt-5 max-w-xl text-balance text-white/70 sm:text-lg">
-              {profile.tagline}
-            </p>
-
-            <div className="hero-cta pointer-events-auto mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center md:justify-start">
-              <Button
-                asChild
-                size="lg"
-                className="rounded-xl px-6 py-6 text-base shadow-lg shadow-fuchsia-500/20 bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500"
-              >
-                <a href={`mailto:${profile.email}?subject=Hello%20Farhad`} aria-label="Contact Farhad via email">
-                  Contact me
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </a>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="rounded-xl border-white/20 bg-white/5 px-6 py-6 text-base text-white hover:bg-white/10"
-              >
-                <a href="#experience">Explore my work</a>
-              </Button>
-            </div>
-
-            {enable3D && (
-              <p className="mt-6 text-xs text-white/40">
-                Tip: move your mouse — each glowing node is a chapter of my career. Click one to explore.
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
-        <a
-          href="#summary"
-          aria-label="Scroll to content"
-          className="hero-cue pointer-events-auto absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 transition hover:text-white"
+        {/* Readability veil so text pops over the scene */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(5,1,15,0.75)_100%)]"
+        />
+
+        {/* Overlay content — pointer-events off so nodes stay clickable, re-enabled per element */}
+        <div
+          ref={overlayRef}
+          className="pointer-events-none relative z-10 flex h-[100svh] flex-col justify-center"
         >
-          <ChevronDown className="h-6 w-6 animate-bounce" />
-        </a>
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl text-center md:text-left">
+              <div className="hero-badge pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/20 backdrop-blur">
+                <Sparkles className="h-4 w-4 text-yellow-300" />
+                <span className="text-xs uppercase tracking-wider text-white/80">Hello, I’m</span>
+              </div>
+
+              <h1 className="hero-title mt-4 text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl lg:text-7xl">
+                <span className="bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                  {profile.name}
+                </span>
+              </h1>
+              <p className="hero-subtitle mt-3 text-lg text-white/80 sm:text-xl">{profile.title}</p>
+              <p className="hero-desc mt-5 max-w-xl text-balance text-white/70 sm:text-lg">
+                {profile.tagline}
+              </p>
+
+              <div className="hero-cta pointer-events-auto mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center md:justify-start">
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-xl px-6 py-6 text-base shadow-lg shadow-fuchsia-500/20 bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500"
+                >
+                  <a href={`mailto:${profile.email}?subject=Hello%20Farhad`} aria-label="Contact Farhad via email">
+                    Contact me
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="rounded-xl border-white/20 bg-white/5 px-6 py-6 text-base text-white hover:bg-white/10"
+                >
+                  <a href="#experience">Explore my work</a>
+                </Button>
+              </div>
+
+              {enable3D && (
+                <p className="mt-6 text-xs text-white/40">
+                  {enableScroll
+                    ? "Tip: scroll to travel through my career, present → past. Click any node for the full chapter."
+                    : "Tip: move your mouse — each glowing node is a chapter of my career. Click one to explore."}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <a
+            href="#summary"
+            aria-label="Scroll to content"
+            className="hero-cue pointer-events-auto absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 transition hover:text-white"
+          >
+            <ChevronDown className="h-6 w-6 animate-bounce" />
+          </a>
+        </div>
       </div>
     </section>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type MutableRefObject } from "react"
 import { Canvas } from "@react-three/fiber"
 import * as THREE from "three"
 import ParticleField from "./particle-field"
@@ -11,13 +11,15 @@ import type { Experience } from "@/lib/portfolio-data"
 
 type Props = {
   reducedMotion?: boolean
+  // 0..1 scroll progress through the pinned hero, driving the timeline fly-through.
+  progressRef?: MutableRefObject<number>
 }
 
 // The interactive 3D layer of the hero. Rendered client-only (see hero.tsx)
 // because three.js touches `window` at module-eval time.
 // The scene is a timeline: companies float along the depth axis, present near,
 // past receding into the fog. Click a node to fly to that career chapter.
-export default function HeroCanvas({ reducedMotion = false }: Props) {
+export default function HeroCanvas({ reducedMotion = false, progressRef }: Props) {
   const [selected, setSelected] = useState<Experience | null>(null)
 
   return (
@@ -39,7 +41,7 @@ export default function HeroCanvas({ reducedMotion = false }: Props) {
 
         <ParticleField count={reducedMotion ? 500 : 1400} />
         <ExperienceConstellation onSelect={setSelected} activeCompany={selected?.company ?? null} />
-        <CameraRig target={selected?.scenePos ?? null} reducedMotion={reducedMotion} />
+        <CameraRig target={selected?.scenePos ?? null} reducedMotion={reducedMotion} progressRef={progressRef} />
       </Canvas>
 
       <ExperienceDetail exp={selected} onClose={() => setSelected(null)} />
