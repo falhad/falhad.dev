@@ -14,8 +14,7 @@ const SYMBOLS = ["{ }", "< >", "( )", "/>", ";", "#", "@"]
 const COLORS = ["#C29B6B", "#CFA15C", "#A85A3C", "#C8873F", "#B5714A", "#BE8A3C", "#C29B6B"]
 // Smaller on content-dense sections so the text can breathe.
 const SCALES = [1.0, 1.0, 0.7, 0.62, 0.92, 0.72, 0.95]
-const DENSE = new Set([2, 3, 5]) // work, capabilities, recognition — push further aside
-const side = (i: number) => (i % 2 === 0 ? 1 : -1) // right / left, alternating
+const DENSE = new Set([2, 3, 5]) // work, capabilities, recognition — push further right
 const FONT = "/fonts/helvetiker_bold.typeface.json"
 const MELT_DURATION = 3.3 // very slow, so the melt reads as a smooth transition
 
@@ -27,8 +26,6 @@ function Protagonist() {
 
   const s = useRef({
     target: 0,
-    fromIndex: 0, // section the travel starts from
-    toIndex: 0, // section the travel arrives at
     melt: 0, // 0..1 transition; 0 = idle
     swapped: true,
     color: new THREE.Color(COLORS[0]),
@@ -57,8 +54,6 @@ function Protagonist() {
 
     // Start a melt when the active section changes.
     if (best !== st.target && st.melt === 0) {
-      st.fromIndex = st.target
-      st.toIndex = best
       st.target = best
       st.melt = 0.0001
       st.swapped = false
@@ -84,20 +79,11 @@ function Protagonist() {
       mat.current.color.lerp(st.color, 1 - Math.pow(0.002, dt))
     }
 
-    // Side-alternating travel, eased across the WHOLE melt so the object glides
-    // from one column to the other in a slow arc instead of snapping sides.
-    const off = (idx: number) => Math.min(viewport.width * 0.24, 2.6) * (DENSE.has(idx) ? 1.2 : 1)
-    if (st.melt > 0) {
-      const e = st.melt * st.melt * (3 - 2 * st.melt) // smoothstep
-      const fromX = side(st.fromIndex) * off(st.fromIndex)
-      const toX = side(st.toIndex) * off(st.toIndex)
-      g.position.x = fromX + (toX - fromX) * e
-      g.position.y = Math.sin(Math.PI * st.melt) * 0.6 // gentle arc lift mid-travel
-    } else {
-      const restX = side(shown) * off(shown)
-      g.position.x += (restX - g.position.x) * (1 - Math.pow(0.1, dt))
-      g.position.y += (0 - g.position.y) * (1 - Math.pow(0.1, dt))
-    }
+    // Stays pinned to the right the whole way — it only morphs in place.
+    // Pushed a little further right on content-dense sections.
+    const offset = Math.min(viewport.width * 0.24, 2.6) * (DENSE.has(shown) ? 1.25 : 1)
+    g.position.x += (offset - g.position.x) * (1 - Math.pow(0.1, dt))
+    g.position.y += (0 - g.position.y) * (1 - Math.pow(0.1, dt))
     // Slow, continuous rotation with a soft extra turn during the melt.
     g.rotation.y += dt * (0.16 + meltPulse * 0.5)
     g.rotation.x = Math.sin(performance.now() * 0.0002) * 0.12
