@@ -1,10 +1,6 @@
 "use client"
-import dynamic from "next/dynamic"
 import { profile } from "@/lib/portfolio-data"
 import Magnetic from "@/components/motion/magnetic"
-
-// three.js touches `window` at module load — never server-render it.
-const HeroSculpture = dynamic(() => import("@/components/three/hero-sculpture"), { ssr: false })
 
 export default function Hero() {
   return (
@@ -13,7 +9,6 @@ export default function Hero() {
       aria-label="Intro"
       className="relative flex min-h-screen flex-col justify-center overflow-hidden px-6 md:px-12"
     >
-      <HeroSculpture />
       <div className="relative z-10 mx-auto w-full max-w-6xl">
         <p className="section-label mb-6">{profile.location} · 14 years</p>
         <h1 className="font-display text-[clamp(3rem,11vw,10rem)] font-semibold leading-[0.92] tracking-tight text-foreground">
