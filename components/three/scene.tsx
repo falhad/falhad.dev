@@ -12,6 +12,7 @@ const MUG = "/models/mug_latte.glb" // user-supplied (converted spec-gloss -> me
 const DESK = "/models/computer_desk.glb" // user-supplied
 const NOTEBOOK = "/models/notebook_and_pen.glb" // user-supplied
 const FLOWER = "/models/small_flower._polycam_app.glb" // user-supplied
+const LAMP = "/models/desk_lamp.glb" // user-supplied
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
 
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
@@ -25,7 +26,7 @@ type Anchor = "bottom" | "top" | "center"
 
 // Load a glb, scaled to `size` by footprint, anchored so its bottom/top/center
 // sits at local y=0. The desk surface is y=0, so everything rests on it.
-function useAnchored(url: string, size: number, anchor: Anchor) {
+function useAnchored(url: string, size: number, anchor: Anchor, fit: "footprint" | "max" = "footprint") {
   const { scene } = useGLTF(url)
   return useMemo(() => {
     const object = scene.clone(true)
@@ -43,12 +44,12 @@ function useAnchored(url: string, size: number, anchor: Anchor) {
         m.receiveShadow = true
       }
     })
-    const k = size / Math.max(s.x, s.z)
+    const k = size / (fit === "max" ? Math.max(s.x, s.y, s.z) : Math.max(s.x, s.z))
     const g = new THREE.Group()
     g.add(object)
     g.scale.setScalar(k)
     return g
-  }, [scene, size, anchor])
+  }, [scene, size, anchor, fit])
 }
 
 // The MacBook, bottom-anchored to the desk, with its lid on a hinge pivot.
@@ -127,10 +128,12 @@ const LOOK_TOP = new THREE.Vector3(0, 0, 0.3)
 const LOOK_EYE = new THREE.Vector3(0, 0.7, 0)
 
 const LID_CLOSED = 1.78 // radians; model default (0) is open
-const MUG_POS: [number, number, number] = [3.0, 0, 0.55]
-const NOTEBOOK_POS: [number, number, number] = [-2.6, 0, 1.1]
+const MUG_POS: [number, number, number] = [3.0, 0, 0.75]
+const NOTEBOOK_POS: [number, number, number] = [-2.95, 0, 1.35]
 const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
-const FLOWER_POS: [number, number, number] = [-3.0, 0, -0.9]
+const FLOWER_POS: [number, number, number] = [-3.05, 0, -0.95]
+const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
+const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
 const SCREEN_SIZE: [number, number] = [2.46, 1.56]
@@ -149,6 +152,7 @@ function Sequence() {
   const desk = useAnchored(DESK, 8.5, "top")
   const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
   const flower = useAnchored(FLOWER, 1.3, "bottom")
+  const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
   const nameTex = useNameTexture()
 
   useFrame((state, dtRaw) => {
@@ -193,6 +197,7 @@ function Sequence() {
       <primitive object={mug} position={MUG_POS} />
       <primitive object={notebook} position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT} />
       <primitive object={flower} position={FLOWER_POS} />
+      <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
     </group>
   )
 }
@@ -202,6 +207,7 @@ useGLTF.preload(MUG)
 useGLTF.preload(DESK)
 useGLTF.preload(NOTEBOOK)
 useGLTF.preload(FLOWER)
+useGLTF.preload(LAMP)
 
 export default function Scene() {
   const reduced = useReducedMotion()
