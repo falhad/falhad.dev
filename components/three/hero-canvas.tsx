@@ -6,6 +6,7 @@ import * as THREE from "three"
 import ParticleField from "./particle-field"
 import ProjectConstellation from "./project-constellation"
 import ProjectDetail from "./project-detail"
+import CameraRig from "./camera-rig"
 import type { Project } from "@/lib/portfolio-data"
 
 type Props = {
@@ -36,6 +37,7 @@ export default function HeroCanvas({ reducedMotion = false }: Props) {
 
         <ParticleField count={reducedMotion ? 500 : 1400} />
         <ProjectConstellation onSelect={setSelected} activeName={selected?.name ?? null} />
+        <CameraRig target={selected?.position ?? null} reducedMotion={reducedMotion} />
       </Canvas>
 
       <ProjectDetail project={selected} onClose={() => setSelected(null)} />

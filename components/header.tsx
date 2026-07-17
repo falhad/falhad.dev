@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Mail, Linkedin, Github } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
 
 const navItems = [
   { id: "summary", label: "Summary" },
@@ -72,7 +71,6 @@ export default function Header() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <Button asChild size="sm" className="rounded-full bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500">
               <a href="mailto:cs.arcxx@gmail.com?subject=Hello%20Farhad&body=Hi%20Farhad%2C%0A%0A" aria-label="Contact Farhad via email">
                 <Mail className="mr-2 h-4 w-4" /> Contact
