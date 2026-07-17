@@ -15,6 +15,8 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
     })
+    // Expose for the command console so `goto` can drive scroll.
+    ;(window as unknown as { __lenis?: Lenis }).__lenis = lenis
 
     let raf = 0
     const loop = (time: number) => {
@@ -39,6 +41,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     return () => {
       cancelAnimationFrame(raf)
       document.removeEventListener("click", onClick)
+      delete (window as unknown as { __lenis?: Lenis }).__lenis
       lenis.destroy()
     }
   }, [])

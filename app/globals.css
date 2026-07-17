@@ -155,9 +155,27 @@
   }
 }
 
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+@keyframes caret-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.caret {
+  animation: caret-blink 1s step-end infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .live-dot,
-  .signal-anim {
+  .signal-anim,
+  .animate-marquee,
+  .caret {
     animation: none !important;
   }
   html {

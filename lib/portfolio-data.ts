@@ -62,6 +62,7 @@ export const profile = {
   website: "https://falhad.dev",
   linkedin: "https://www.linkedin.com/in/farhadnava/",
   github: "https://github.com/falhad",
+  resume: "https://drive.google.com/file/d/1bmeJ-Hubz-ovqnJO4WK2s0GcQCj9-jT6/view",
   avatar:
     "https://storage.rxresu.me/cm3e7oe3l00mgdbpo4c2nq7yn/pictures/cm3e7oe3l00mgdbpo4c2nq7yn.jpg",
   summary:

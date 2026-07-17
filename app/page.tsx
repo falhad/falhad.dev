@@ -12,11 +12,13 @@ import Contact from "@/components/contact"
 import SmoothScrollProvider from "@/components/scroll/smooth-scroll-provider"
 import Reveal from "@/components/scroll/reveal"
 import StatsStrip from "@/components/stats-strip"
+import OperatorConsole from "@/components/console/operator-console"
 
 export default function Home() {
   return (
     <SmoothScrollProvider>
-      <main className="min-h-screen text-foreground">
+      <OperatorConsole />
+      <main className="min-h-screen pb-10 text-foreground">
         <Header />
         <section id="hero" aria-label="Hero">
           <Hero />
