@@ -44,11 +44,12 @@ Keep all real content. Remove the galaxy/console/HUD themes entirely.
 Reserve `--terracotta` for hover/active/focus states so the pop reads as expensive.
 
 ### Typography
-- **Display**: large, confident, tight-tracked sans for headlines (hero up to ~8–14vw).
+- **Display**: **swap to a warmer, confident sans** for headlines (hero up to ~8–14vw). Prefer a
+  next/font Google face that reads warm and characterful (e.g. a grotesque/humanist display such
+  as Bricolage Grotesque, Clash-like, or Instrument Sans) over the current cold face. Final pick
+  during build, wired via `next/font` in `app/layout.tsx`.
 - **Body**: clean readable sans, generous line-height, generous whitespace.
 - **Kill** the monospace eyebrow / HUD vernacular. Replace with quiet small-caps section labels.
-- Reuse existing `--font-display` / `--font-sans` wiring in `app/layout.tsx`; retune, do not
-  necessarily add new fonts unless the current display face reads cold.
 
 ### Motion
 - **Lenis** smooth scroll retained, tuned softer/heavier (lower lerp, gentle easing).
@@ -94,8 +95,10 @@ Single-page vertical narrative. New section order and the real content each carr
    - Copy: *"The channel is open."*
    - email cs.arcxx@gmail.com · phone +968 90130747 · LinkedIn in/farhadnava · GitHub @falhad.
 
-Header/nav: keep a minimal sticky nav, relabeled warmly (Work, Capabilities, Journey, Contact),
-drop the console `⌘K` affordance.
+Header/nav: **fully immersive — no sticky top nav.** A single minimal corner menu (fixed
+overlay, e.g. top-right) toggles a warm full-screen overlay with the anchors (Work, Capabilities,
+Journey, Contact) + contact links. Closed by default so nothing competes with the hero. Drop the
+console `⌘K` affordance.
 
 ## 5. Component Architecture
 
@@ -115,7 +118,7 @@ New / rebuilt component units:
 - `components/journey.tsx` — merged experience + education timeline.
 - `components/recognition.tsx` — certs + awards (merged `certifications.tsx` + `awards.tsx`).
 - `components/contact.tsx` — rebuilt warm outro.
-- `components/header.tsx` — rebuilt minimal warm nav.
+- `components/menu.tsx` — corner-menu toggle + full-screen warm overlay (replaces `header.tsx`).
 
 Shared motion primitives (small, isolated, testable):
 - `components/scroll/smooth-scroll-provider.tsx` — retune Lenis (keep file).
@@ -165,9 +168,10 @@ Retire `theme-toggle.tsx` usage (single warm-light theme; keep file only if triv
 ## 10. Risks & Open Questions
 
 - **Perf of blob + bloom on mobile** — mitigate with subdiv/bloom budget + fallback.
-- **Display font** — current face may read cold; may swap to a warmer confident sans. Decide during build.
 - **Single-page length** — 7 sections + build log is long; pacing/whitespace must carry it.
-- Open: keep sticky header or go fully immersive with a minimal corner menu? Default: minimal sticky.
+
+Resolved: display font swapped to a warmer confident sans (final pick during build);
+navigation is fully immersive via a corner menu (no sticky top nav).
 
 ## 11. Success Criteria
 
