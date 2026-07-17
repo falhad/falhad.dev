@@ -17,7 +17,7 @@ const SCALES = [1.0, 1.0, 0.7, 0.62, 0.92, 0.72, 0.95]
 const DENSE = new Set([2, 3, 5]) // work, capabilities, recognition — push further aside
 const side = (i: number) => (i % 2 === 0 ? 1 : -1) // right / left, alternating
 const FONT = "/fonts/helvetiker_bold.typeface.json"
-const MELT_DURATION = 2.1 // slower, so the melt reads as a smooth transition
+const MELT_DURATION = 3.3 // very slow, so the melt reads as a smooth transition
 
 function Protagonist() {
   const grp = useRef<THREE.Group>(null)
@@ -27,6 +27,8 @@ function Protagonist() {
 
   const s = useRef({
     target: 0,
+    fromIndex: 0, // section the travel starts from
+    toIndex: 0, // section the travel arrives at
     melt: 0, // 0..1 transition; 0 = idle
     swapped: true,
     color: new THREE.Color(COLORS[0]),
@@ -55,6 +57,8 @@ function Protagonist() {
 
     // Start a melt when the active section changes.
     if (best !== st.target && st.melt === 0) {
+      st.fromIndex = st.target
+      st.toIndex = best
       st.target = best
       st.melt = 0.0001
       st.swapped = false
@@ -80,12 +84,22 @@ function Protagonist() {
       mat.current.color.lerp(st.color, 1 - Math.pow(0.002, dt))
     }
 
-    // Side-alternating travel; further aside on dense sections.
-    const base = Math.min(viewport.width * 0.24, 2.6)
-    const offset = base * (DENSE.has(shown) ? 1.2 : 1)
-    const targetX = side(shown) * offset
-    g.position.x += (targetX - g.position.x) * (1 - Math.pow(0.002, dt))
-    g.rotation.y += dt * (0.18 + meltPulse * 1.0)
+    // Side-alternating travel, eased across the WHOLE melt so the object glides
+    // from one column to the other in a slow arc instead of snapping sides.
+    const off = (idx: number) => Math.min(viewport.width * 0.24, 2.6) * (DENSE.has(idx) ? 1.2 : 1)
+    if (st.melt > 0) {
+      const e = st.melt * st.melt * (3 - 2 * st.melt) // smoothstep
+      const fromX = side(st.fromIndex) * off(st.fromIndex)
+      const toX = side(st.toIndex) * off(st.toIndex)
+      g.position.x = fromX + (toX - fromX) * e
+      g.position.y = Math.sin(Math.PI * st.melt) * 0.6 // gentle arc lift mid-travel
+    } else {
+      const restX = side(shown) * off(shown)
+      g.position.x += (restX - g.position.x) * (1 - Math.pow(0.1, dt))
+      g.position.y += (0 - g.position.y) * (1 - Math.pow(0.1, dt))
+    }
+    // Slow, continuous rotation with a soft extra turn during the melt.
+    g.rotation.y += dt * (0.16 + meltPulse * 0.5)
     g.rotation.x = Math.sin(performance.now() * 0.0002) * 0.12
     const scale = SCALES[shown] * (1 - meltPulse * 0.2)
     g.scale.setScalar(scale)
@@ -105,7 +119,16 @@ function Protagonist() {
           curveSegments={8}
         >
           {SYMBOLS[shown]}
-          <MeshDistortMaterial ref={mat} color={COLORS[0]} roughness={0.15} metalness={0.35} distort={0.12} speed={1.4} />
+          <MeshDistortMaterial
+            ref={mat}
+            color={COLORS[0]}
+            emissive="#7A2F12"
+            emissiveIntensity={0.55}
+            roughness={0.15}
+            metalness={0.35}
+            distort={0.12}
+            speed={1.4}
+          />
         </Text3D>
       </Center>
     </group>
@@ -137,7 +160,7 @@ export default function Scene() {
           <Environment preset="sunset" />
         </Suspense>
         <EffectComposer>
-          <Bloom intensity={0.5} luminanceThreshold={0.55} mipmapBlur />
+          <Bloom intensity={1.35} luminanceThreshold={0.28} luminanceSmoothing={0.9} mipmapBlur />
         </EffectComposer>
       </Canvas>
     </div>
