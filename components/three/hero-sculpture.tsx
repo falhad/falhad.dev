@@ -2,7 +2,7 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { MeshDistortMaterial, Environment, Float } from "@react-three/drei"
 import { EffectComposer, Bloom } from "@react-three/postprocessing"
-import { useRef } from "react"
+import { Suspense, useRef } from "react"
 import type { Mesh } from "three"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
 
@@ -45,10 +45,16 @@ export default function HeroSculpture() {
   return (
     <div className="absolute inset-0" aria-hidden>
       <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 1.75]} gl={{ antialias: true }}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[3, 4, 5]} intensity={1.2} color="#fff3e0" />
+        {/* Lights carry the blob on their own so it always renders, even if the
+            environment HDR is slow or unreachable. */}
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[3, 4, 5]} intensity={1.4} color="#fff3e0" />
+        <directionalLight position={[-4, -2, 2]} intensity={0.6} color="#A85A3C" />
         <Blob />
-        <Environment preset="sunset" />
+        {/* Isolated so a hanging/failed HDR fetch can never suspend the blob. */}
+        <Suspense fallback={null}>
+          <Environment preset="sunset" />
+        </Suspense>
         <EffectComposer>
           <Bloom intensity={0.6} luminanceThreshold={0.5} mipmapBlur />
         </EffectComposer>
