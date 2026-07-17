@@ -11,22 +11,27 @@ export default function Hero() {
     // Tall section so the scroll-scripted desk sequence has room to play while
     // the inner container stays pinned. Content flows normally after it.
     <section id="hero" aria-label="Intro" className="relative h-[300vh]">
-      <div className="sticky top-0 h-screen overflow-hidden">
+      <div
+        className="sticky top-0 h-screen overflow-hidden"
+        style={{ background: "radial-gradient(120% 100% at 50% 22%, #F1ECE3, #DED7CA 55%, #C7BFB1)" }}
+      >
         <Scene />
 
         <h1 className="sr-only">{profile.name}</h1>
 
-        {/* Minimal overlay — the name lives on the laptop screen. */}
+        {/* Minimal overlay — dark-on-light for the studio hero. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-14 px-6 md:px-12">
           <div className="mx-auto max-w-6xl">
-            <p className="section-label mb-3">{profile.location} · 14 years</p>
-            <p className="max-w-md text-lg leading-relaxed text-muted-foreground">{profile.tagline}</p>
+            <p className="mb-3 text-[0.72rem] font-medium uppercase tracking-[0.22em] text-[#6b6152]">
+              {profile.location} · 14 years
+            </p>
+            <p className="max-w-md text-lg leading-relaxed text-[#38312a]">{profile.tagline}</p>
             <div className="pointer-events-auto mt-6">
               <Magnetic>
                 <a
                   href="#work"
                   data-cursor="view work"
-                  className="inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3 text-background transition-colors hover:bg-[var(--terracotta)]"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#201c18] px-7 py-3 text-[#f3ede3] transition-colors hover:bg-[var(--terracotta)]"
                 >
                   Selected work
                 </a>
@@ -35,7 +40,9 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="section-label absolute bottom-6 left-1/2 -translate-x-1/2 animate-pulse">scroll</div>
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-pulse text-[0.7rem] font-medium uppercase tracking-[0.22em] text-[#6b6152]">
+          scroll
+        </div>
       </div>
     </section>
   )
