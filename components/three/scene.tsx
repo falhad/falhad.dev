@@ -17,7 +17,7 @@ const SCALES = [1.0, 1.0, 0.7, 0.62, 0.92, 0.72, 0.95]
 const DENSE = new Set([2, 3, 5]) // work, capabilities, recognition — push further aside
 const side = (i: number) => (i % 2 === 0 ? 1 : -1) // right / left, alternating
 const FONT = "/fonts/helvetiker_bold.typeface.json"
-const MELT_DURATION = 1.1
+const MELT_DURATION = 2.1 // slower, so the melt reads as a smooth transition
 
 function Protagonist() {
   const grp = useRef<THREE.Group>(null)
@@ -71,9 +71,12 @@ function Protagonist() {
 
     // Distortion peaks mid-transition (liquid melt) but stays low otherwise so
     // the glyph reads.
-    const meltPulse = st.melt > 0 ? Math.sin(Math.PI * st.melt) : 0
+    // Ease the pulse (sine^1.5) so it swells and settles gently rather than
+    // snapping, and drive distortion fully to a blob at the peak so the glyph
+    // swap is hidden inside a formless melt.
+    const meltPulse = st.melt > 0 ? Math.pow(Math.sin(Math.PI * st.melt), 1.5) : 0
     if (mat.current) {
-      mat.current.distort = 0.12 + meltPulse * 0.5
+      mat.current.distort = 0.12 + meltPulse * 1.0
       mat.current.color.lerp(st.color, 1 - Math.pow(0.002, dt))
     }
 
@@ -84,7 +87,7 @@ function Protagonist() {
     g.position.x += (targetX - g.position.x) * (1 - Math.pow(0.002, dt))
     g.rotation.y += dt * (0.18 + meltPulse * 1.0)
     g.rotation.x = Math.sin(performance.now() * 0.0002) * 0.12
-    const scale = SCALES[shown] * (1 - meltPulse * 0.12)
+    const scale = SCALES[shown] * (1 - meltPulse * 0.2)
     g.scale.setScalar(scale)
   })
 

@@ -3,30 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --background: 37 33% 92%;      /* cream #F3EDE3 */
-  --foreground: 24 12% 12%;      /* espresso #231F1C */
-  --card: 37 33% 94%;
-  --card-foreground: 24 12% 12%;
-  --popover: 37 33% 94%;
-  --popover-foreground: 24 12% 12%;
-  --primary: 24 12% 12%;
-  --primary-foreground: 37 33% 95%;
-  --secondary: 37 30% 87%;       /* paper #EAE2D4 */
-  --secondary-foreground: 24 12% 12%;
-  --muted: 37 30% 87%;
-  --muted-foreground: 28 12% 26%; /* #4A423B */
-  --accent: 33 42% 59%;          /* cork */
-  --accent-foreground: 24 12% 12%;
+  /* Warm dark — espresso base, cream ink, cork/amber accents. */
+  --background: 28 22% 7%;        /* deep espresso #171310 */
+  --foreground: 36 30% 88%;       /* warm cream #EBE2D4 */
+  --card: 28 18% 10%;
+  --card-foreground: 36 30% 88%;
+  --popover: 28 18% 10%;
+  --popover-foreground: 36 30% 88%;
+  --primary: 36 30% 88%;
+  --primary-foreground: 28 22% 8%;
+  --secondary: 30 14% 14%;        /* lifted panel */
+  --secondary-foreground: 36 30% 88%;
+  --muted: 30 14% 14%;
+  --muted-foreground: 33 14% 62%; /* warm taupe */
+  --accent: 33 45% 60%;           /* cork */
+  --accent-foreground: 28 22% 8%;
   --destructive: 0 62% 45%;
-  --destructive-foreground: 37 33% 95%;
-  --border: 33 22% 78%;
-  --input: 33 22% 78%;
-  --ring: 16 47% 45%;            /* terracotta */
+  --destructive-foreground: 36 30% 92%;
+  --border: 30 12% 20%;
+  --input: 30 12% 20%;
+  --ring: 18 60% 55%;             /* terracotta, brightened for dark */
   --radius: 0.75rem;
 
   /* Direct-hex brand accents */
   --cork: #C29B6B;
-  --terracotta: #A85A3C;
+  --terracotta: #C46B45;
 }
 
 @layer base {
