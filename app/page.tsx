@@ -7,52 +7,71 @@ import Certifications from "@/components/certifications"
 import Awards from "@/components/awards"
 import Projects from "@/components/projects"
 import Hero from "@/components/hero"
-import Resume from "@/components/resume"
 import Contact from "@/components/contact"
+import SmoothScrollProvider from "@/components/scroll/smooth-scroll-provider"
+import Reveal from "@/components/scroll/reveal"
+import StatsStrip from "@/components/stats-strip"
 
 export default function Home() {
   return (
-    <main className="min-h-screen text-foreground">
-      <Header />
-      <section id="hero" aria-label="Hero">
-        <Hero />
-      </section>
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
-            <section id="summary" aria-label="Professional Summary">
-              <Summary />
-            </section>
-            <section id="experience" aria-label="Professional Experience">
-              <Experience />
-            </section>
-            {/*<section id="projects" aria-label="Featured Projects">*/}
-            {/*  <Projects />*/}
-            {/*</section>*/}
-            {/*<section id="resume" aria-label="Resume">*/}
-            {/*  <Resume />*/}
-            {/*</section>*/}
-            <section id="contact" aria-label="Contact">
-              <Contact />
-            </section>
-          </div>
-          <div>
-            <section id="education" aria-label="Education">
-              <Education />
-            </section>
-            <section id="skills" aria-label="Skills">
-              <Skills />
-            </section>
-            <section id="certifications" aria-label="Certifications">
-              <Certifications />
-            </section>
-            <section id="awards" aria-label="Awards & Achievements">
-              <Awards />
-            </section>
+    <SmoothScrollProvider>
+      <main className="min-h-screen text-foreground">
+        <Header />
+        <section id="hero" aria-label="Hero">
+          <Hero />
+        </section>
+
+        <StatsStrip />
+
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="md:col-span-2">
+              <Reveal>
+                <section id="summary" aria-label="Professional Summary">
+                  <Summary />
+                </section>
+              </Reveal>
+              <Reveal>
+                <section id="experience" aria-label="Professional Experience">
+                  <Experience />
+                </section>
+              </Reveal>
+              <Reveal>
+                <section id="projects" aria-label="Featured Projects">
+                  <Projects />
+                </section>
+              </Reveal>
+              <Reveal>
+                <section id="contact" aria-label="Contact">
+                  <Contact />
+                </section>
+              </Reveal>
+            </div>
+            <div>
+              <Reveal delay={0.05}>
+                <section id="education" aria-label="Education">
+                  <Education />
+                </section>
+              </Reveal>
+              <Reveal delay={0.05}>
+                <section id="skills" aria-label="Skills">
+                  <Skills />
+                </section>
+              </Reveal>
+              <Reveal delay={0.05}>
+                <section id="certifications" aria-label="Certifications">
+                  <Certifications />
+                </section>
+              </Reveal>
+              <Reveal delay={0.05}>
+                <section id="awards" aria-label="Awards & Achievements">
+                  <Awards />
+                </section>
+              </Reveal>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </SmoothScrollProvider>
   )
 }
-
