@@ -1,6 +1,6 @@
 "use client"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { Environment, useGLTF } from "@react-three/drei"
+import { Environment, useGLTF, useTexture } from "@react-three/drei"
 import { EffectComposer, Bloom } from "@react-three/postprocessing"
 import { Suspense, useMemo, useRef } from "react"
 import * as THREE from "three"
@@ -13,7 +13,11 @@ const DESK = "/models/computer_desk.glb" // user-supplied
 const NOTEBOOK = "/models/notebook_and_pen.glb" // user-supplied
 const FLOWER = "/models/small_flower._polycam_app.glb" // user-supplied
 const LAMP = "/models/desk_lamp.glb" // user-supplied
+const FRAME = "/models/photo_frame.glb" // user-supplied
+const PORTRAIT = "/images/portrait.jpg"
+const FRAME_PIC = "Plane_0" // the picture surface inside the frame
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
+const SCREEN_MESH = "Object_82" // the emissive display — recolored black so the name panel blends
 
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
@@ -69,6 +73,10 @@ function useMacBook(size: number) {
       pivot.attach(lid)
     }
 
+    // Blank the default wallpaper to pure black.
+    const screen = object.getObjectByName(SCREEN_MESH) as THREE.Mesh | undefined
+    if (screen) screen.material = new THREE.MeshBasicMaterial({ color: "#000000" })
+
     object.traverse((o) => {
       const m = o as THREE.Mesh
       if (m.isMesh) {
@@ -89,6 +97,34 @@ function useMacBook(size: number) {
     group.scale.setScalar(k)
     return { group, pivot }
   }, [scene, size])
+}
+
+// Photo frame with the portrait applied to its picture surface.
+function usePhotoFrame(size: number) {
+  const { scene } = useGLTF(FRAME)
+  const photo = useTexture(PORTRAIT)
+  return useMemo(() => {
+    photo.colorSpace = THREE.SRGBColorSpace
+    photo.flipY = false // glTF UV convention
+    const object = scene.clone(true)
+    const pic = object.getObjectByName(FRAME_PIC) as THREE.Mesh | undefined
+    if (pic) pic.material = new THREE.MeshStandardMaterial({ map: photo, roughness: 0.5, metalness: 0 })
+    const box = new THREE.Box3().setFromObject(object)
+    const s = new THREE.Vector3()
+    const c = new THREE.Vector3()
+    box.getSize(s)
+    box.getCenter(c)
+    object.position.set(-c.x, -box.min.y, -c.z)
+    object.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (m.isMesh) m.castShadow = true
+    })
+    const k = size / Math.max(s.x, s.y, s.z)
+    const g = new THREE.Group()
+    g.add(object)
+    g.scale.setScalar(k)
+    return g
+  }, [scene, photo, size])
 }
 
 // Pure-black screen showing the name + title in an Apple-style typeface.
@@ -134,6 +170,8 @@ const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
 const FLOWER_POS: [number, number, number] = [-3.05, 0, -0.95]
 const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
+const FRAME_POS: [number, number, number] = [-2.45, 0, -1.15]
+const FRAME_ROT: [number, number, number] = [0, -0.85, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
 const SCREEN_SIZE: [number, number] = [2.46, 1.56]
@@ -153,6 +191,7 @@ function Sequence() {
   const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
   const flower = useAnchored(FLOWER, 0.9, "bottom")
   const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
+  const frame = usePhotoFrame(1.5)
   const nameTex = useNameTexture()
 
   useFrame((state, dtRaw) => {
@@ -198,6 +237,7 @@ function Sequence() {
       <primitive object={notebook} position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT} />
       <primitive object={flower} position={FLOWER_POS} />
       <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
+      <primitive object={frame} position={FRAME_POS} rotation={FRAME_ROT} />
     </group>
   )
 }
@@ -208,6 +248,7 @@ useGLTF.preload(DESK)
 useGLTF.preload(NOTEBOOK)
 useGLTF.preload(FLOWER)
 useGLTF.preload(LAMP)
+useGLTF.preload(FRAME)
 
 export default function Scene() {
   const reduced = useReducedMotion()
