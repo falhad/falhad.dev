@@ -10,6 +10,8 @@ import { useReducedMotion } from "@/lib/use-reduced-motion"
 const LAPTOP = "/models/macbook.glb" // user-supplied MacBook Pro
 const MUG = "/models/mug_latte.glb" // user-supplied (converted spec-gloss -> metal-rough)
 const DESK = "/models/computer_desk.glb" // user-supplied
+const NOTEBOOK = "/models/notebook_and_pen.glb" // user-supplied
+const FLOWER = "/models/small_flower._polycam_app.glb" // user-supplied
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
 
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
@@ -88,28 +90,29 @@ function useMacBook(size: number) {
   }, [scene, size])
 }
 
+// Pure-black screen showing the name + title in an Apple-style typeface.
+const SF = '"SF Pro Display", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif'
 function useNameTexture() {
   return useMemo(() => {
+    const W = 1600
+    const H = 1000
     const c = document.createElement("canvas")
-    c.width = 1024
-    c.height = 660
+    c.width = W
+    c.height = H
     const x = c.getContext("2d")!
-    const grad = x.createLinearGradient(0, 0, 0, 660)
-    grad.addColorStop(0, "#141a24")
-    grad.addColorStop(1, "#0a0e15")
-    x.fillStyle = grad
-    x.fillRect(0, 0, 1024, 660)
+    x.fillStyle = "#000000"
+    x.fillRect(0, 0, W, H)
     x.textAlign = "center"
     x.textBaseline = "middle"
-    const [first, ...rest] = profile.name.split(" ")
-    x.fillStyle = "#f0e8da"
-    x.font = "600 132px Helvetica, Arial, sans-serif"
-    x.fillText(first, 512, 300)
-    x.font = "600 96px Helvetica, Arial, sans-serif"
-    x.fillText(rest.join(" "), 512, 410)
-    x.fillStyle = "#c29b6b"
-    x.font = "500 34px Helvetica, Arial, sans-serif"
-    x.fillText(profile.title.toUpperCase(), 512, 500)
+    // Name
+    x.fillStyle = "#ffffff"
+    x.font = `600 150px ${SF}`
+    x.fillText(profile.name, W / 2, H / 2 - 40)
+    // Title
+    x.fillStyle = "#8a8a8f"
+    x.font = `400 58px ${SF}`
+    if ("letterSpacing" in x) (x as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "3px"
+    x.fillText(profile.title, W / 2, H / 2 + 90)
     const t = new THREE.CanvasTexture(c)
     t.anisotropy = 8
     t.colorSpace = THREE.SRGBColorSpace
@@ -124,10 +127,13 @@ const LOOK_TOP = new THREE.Vector3(0, 0, 0.3)
 const LOOK_EYE = new THREE.Vector3(0, 0.7, 0)
 
 const LID_CLOSED = 1.78 // radians; model default (0) is open
-const MUG_POS: [number, number, number] = [2.1, 0, 0.5]
-const SCREEN_POS: [number, number, number] = [0, 1.06, -0.08]
+const MUG_POS: [number, number, number] = [3.0, 0, 0.55]
+const NOTEBOOK_POS: [number, number, number] = [-2.6, 0, 1.1]
+const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
+const FLOWER_POS: [number, number, number] = [-3.0, 0, -0.9]
+const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
-const SCREEN_SIZE: [number, number] = [2.05, 1.29]
+const SCREEN_SIZE: [number, number] = [2.46, 1.56]
 
 function Sequence() {
   const laptop = useRef<THREE.Group>(null)
@@ -141,6 +147,8 @@ function Sequence() {
   const { group: macbook, pivot } = useMacBook(3.2)
   const mug = useAnchored(MUG, 1.0, "bottom")
   const desk = useAnchored(DESK, 8.5, "top")
+  const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
+  const flower = useAnchored(FLOWER, 1.3, "bottom")
   const nameTex = useNameTexture()
 
   useFrame((state, dtRaw) => {
@@ -183,6 +191,8 @@ function Sequence() {
         </mesh>
       </group>
       <primitive object={mug} position={MUG_POS} />
+      <primitive object={notebook} position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT} />
+      <primitive object={flower} position={FLOWER_POS} />
     </group>
   )
 }
@@ -190,6 +200,8 @@ function Sequence() {
 useGLTF.preload(LAPTOP)
 useGLTF.preload(MUG)
 useGLTF.preload(DESK)
+useGLTF.preload(NOTEBOOK)
+useGLTF.preload(FLOWER)
 
 export default function Scene() {
   const reduced = useReducedMotion()
