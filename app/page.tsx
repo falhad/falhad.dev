@@ -1,6 +1,7 @@
 import SmoothScrollProvider from "@/components/scroll/smooth-scroll-provider"
 import Cursor from "@/components/motion/cursor"
 import Menu from "@/components/menu"
+import Dock from "@/components/os/dock"
 import Hero from "@/components/hero"
 import Statement from "@/components/statement"
 import Work from "@/components/work"
@@ -14,6 +15,7 @@ export default function Home() {
     <SmoothScrollProvider>
       <Cursor />
       <Menu />
+      <Dock />
       <main className="relative z-10 min-h-screen text-foreground">
         <Hero />
         <Statement />

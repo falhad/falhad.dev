@@ -1,56 +1,69 @@
 "use client"
 import { experiences, education } from "@/lib/portfolio-data"
 import Reveal from "@/components/scroll/reveal"
+import MacWindow from "@/components/os/mac-window"
+
+// A short hash for flavour — deterministic from the string so no Math.random.
+function hash(str: string) {
+  let h = 0
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0
+  return h.toString(16).padStart(7, "0").slice(0, 7)
+}
 
 export default function Journey() {
   return (
     <section id="journey" aria-label="Journey" className="mx-auto max-w-6xl px-6 py-24 md:px-12">
-      <p className="section-label mb-4">Journey · {experiences.length} roles</p>
+      <p className="section-label mb-4">Terminal · Journey</p>
       <h2 className="font-display text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
         Where I&apos;ve been
       </h2>
-      <div className="mt-16 border-l border-border pl-6 md:pl-10">
-        {experiences.map((e) => (
-          <Reveal key={e.company + e.date}>
-            <div className="relative pb-14">
-              <span className="absolute -left-[1.6rem] top-2 h-3 w-3 rounded-full bg-[var(--cork)] md:-left-[2.9rem]" />
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="font-display text-xl font-semibold text-foreground">
-                  {e.position} · {e.company}
-                </h3>
-                <span className="section-label">{e.when ?? e.date}</span>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {e.location ? `${e.location} · ${e.date}` : e.date}
-              </p>
-              <ul className="mt-4 space-y-2">
-                {e.responsibilities.map((r) => (
-                  <li
-                    key={r}
-                    className="leading-relaxed text-muted-foreground before:mr-3 before:text-[var(--cork)] before:content-['—']"
-                  >
-                    {r}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
-        ))}
-        <Reveal>
-          <div className="relative">
-            <span className="absolute -left-[1.6rem] top-2 h-3 w-3 rounded-full bg-[var(--terracotta)] md:-left-[2.9rem]" />
-            <h3 className="section-label mb-4 text-foreground">Education</h3>
-            {education.map((ed) => (
-              <div key={ed.degree} className="mb-4">
-                <p className="font-display font-medium text-foreground">{ed.degree}</p>
-                <p className="text-sm text-muted-foreground">
-                  {ed.institution} · {ed.location} · {ed.date}
+
+      <Reveal>
+        <MacWindow title="farhad — zsh — git log" className="mt-16">
+          <div className="overflow-x-auto p-6 font-mono text-[0.82rem] leading-relaxed">
+            <p className="text-[var(--signal,#5ac37a)]">
+              <span className="text-muted-foreground">➜</span> ~/career <span className="text-[#8fb6ff]">git</span> log
+              --author=Farhad --stat
+            </p>
+
+            {experiences.map((e) => (
+              <div key={e.company + e.date} className="mt-5">
+                <p className="text-[#e0b64a]">commit {hash(e.company + e.date)}{"  "}<span className="text-muted-foreground">({e.when ?? e.date})</span></p>
+                <p className="text-foreground/90">
+                  <span className="text-muted-foreground">Author:</span> Farhad Navayazdan
                 </p>
+                <p className="text-muted-foreground">
+                  <span className="text-muted-foreground">Role:</span>{" "}
+                  <span className="text-foreground">{e.position} @ {e.company}</span>
+                  {e.location ? ` · ${e.location}` : ""}
+                </p>
+                <div className="mt-2 pl-4">
+                  {e.responsibilities.map((r) => (
+                    <p key={r} className="text-muted-foreground">
+                      <span className="text-[var(--terracotta)]">+</span> {r}
+                    </p>
+                  ))}
+                </div>
               </div>
             ))}
+
+            <p className="mt-6 text-[var(--signal,#5ac37a)]">
+              <span className="text-muted-foreground">➜</span> ~/career <span className="text-[#8fb6ff]">cat</span>{" "}
+              education.txt
+            </p>
+            {education.map((ed) => (
+              <div key={ed.degree} className="mt-2">
+                <p className="text-foreground">🎓 {ed.degree}</p>
+                <p className="text-muted-foreground">   {ed.institution} · {ed.location} · {ed.date}</p>
+              </div>
+            ))}
+
+            <p className="mt-6 text-[var(--signal,#5ac37a)]">
+              <span className="text-muted-foreground">➜</span> ~/career <span className="animate-pulse">▋</span>
+            </p>
           </div>
-        </Reveal>
-      </div>
+        </MacWindow>
+      </Reveal>
     </section>
   )
 }
