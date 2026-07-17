@@ -1,49 +1,48 @@
-import { Github, Linkedin, Mail, Phone, ArrowUpRight } from "lucide-react"
-import Panel from "@/components/console/panel"
-import SectionHeading from "@/components/console/section-heading"
+"use client"
 import { profile } from "@/lib/portfolio-data"
-
-const channels = [
-  { key: "EMAIL", value: profile.email, href: `mailto:${profile.email}`, icon: Mail, accent: "#e879f9" },
-  { key: "PHONE", value: profile.phoneDisplay, href: `tel:${profile.phoneTel}`, icon: Phone, accent: "#22d3ee" },
-  { key: "LINKEDIN", value: "in/farhadnava", href: profile.linkedin, icon: Linkedin, accent: "#a78bfa" },
-  { key: "GITHUB", value: "@falhad", href: profile.github, icon: Github, accent: "#34d399" },
-]
+import Magnetic from "@/components/motion/magnetic"
 
 export default function Contact() {
+  const links = [
+    { label: "Email", href: `mailto:${profile.email}`, text: profile.email },
+    { label: "Phone", href: `tel:${profile.phoneTel}`, text: profile.phoneDisplay },
+    { label: "LinkedIn", href: profile.linkedin, text: "in/farhadnava" },
+    { label: "GitHub", href: profile.github, text: "@falhad" },
+  ]
   return (
-    <div className="mb-14">
-      <SectionHeading label="OPEN_CHANNEL" title="Get in touch" accent="signal" readout="STATUS: AVAILABLE" />
-      <Panel className="p-6 sm:p-8" grid>
-        <p className="max-w-lg text-sm leading-relaxed text-foreground/75">
-          Building something in real-time systems, blockchain, or AI — or just want to talk shop? The channel
-          is open. Pick any frequency below.
-        </p>
-        <div className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.05] sm:grid-cols-2">
-          {channels.map((c) => (
-            <a
-              key={c.key}
-              href={c.href}
-              {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="group flex items-center gap-3 bg-[#0b0718]/85 p-4 transition-colors hover:bg-[#100a24]/85"
-            >
-              <span
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border"
-                style={{ borderColor: `${c.accent}44`, backgroundColor: `${c.accent}14` }}
-              >
-                <c.icon className="h-4 w-4" style={{ color: c.accent }} />
-              </span>
-              <div className="min-w-0">
-                <div className="mono text-[0.6rem] uppercase tracking-widest" style={{ color: c.accent }}>
-                  {c.key}
-                </div>
-                <div className="mono truncate text-sm text-foreground/85">{c.value}</div>
-              </div>
-              <ArrowUpRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground/40 transition group-hover:text-foreground" />
-            </a>
-          ))}
-        </div>
-      </Panel>
-    </div>
+    <section id="contact" aria-label="Contact" className="mx-auto max-w-6xl px-6 py-32 md:px-12 md:py-48">
+      <p className="section-label mb-6">The channel is open</p>
+      <h2 className="font-display text-[clamp(2.5rem,9vw,7rem)] font-semibold leading-[0.95] tracking-tight text-foreground">
+        Let&apos;s build
+        <br />
+        something.
+      </h2>
+      <div className="mt-12">
+        <Magnetic>
+          <a
+            href={`mailto:${profile.email}?subject=Hello Farhad`}
+            data-cursor="say hi"
+            className="inline-flex items-center gap-2 rounded-full bg-foreground px-8 py-4 text-lg text-background transition-colors hover:bg-[var(--terracotta)]"
+          >
+            {profile.email}
+          </a>
+        </Magnetic>
+      </div>
+      <div className="mt-16 grid grid-cols-2 gap-6 border-t border-border pt-10 md:grid-cols-4">
+        {links.map((l) => (
+          <a
+            key={l.label}
+            href={l.href}
+            target={l.href.startsWith("http") ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            data-cursor="open"
+            className="group"
+          >
+            <div className="section-label">{l.label}</div>
+            <div className="mt-1 text-foreground transition-colors group-hover:text-[var(--terracotta)]">{l.text}</div>
+          </a>
+        ))}
+      </div>
+    </section>
   )
 }
