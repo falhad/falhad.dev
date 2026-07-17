@@ -151,7 +151,7 @@ function Sequence() {
   const mug = useAnchored(MUG, 1.0, "bottom")
   const desk = useAnchored(DESK, 8.5, "top")
   const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
-  const flower = useAnchored(FLOWER, 1.3, "bottom")
+  const flower = useAnchored(FLOWER, 0.9, "bottom")
   const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
   const nameTex = useNameTexture()
 
