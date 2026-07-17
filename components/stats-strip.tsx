@@ -9,8 +9,8 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
-// A thin band of headline numbers right under the hero — the first thing
-// after the 3D scene, giving quick, scannable proof of experience.
+// A console status bar directly under the hero: a live indicator plus the
+// headline numbers as a monospace readout strip.
 export default function StatsStrip() {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -18,13 +18,12 @@ export default function StatsStrip() {
     const el = ref.current
     if (!el) return
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
-
     const ctx = gsap.context(() => {
       gsap.from(el.querySelectorAll("[data-stat]"), {
         opacity: 0,
-        y: 20,
-        stagger: 0.1,
-        duration: 0.7,
+        y: 16,
+        stagger: 0.08,
+        duration: 0.6,
         ease: "power3.out",
         scrollTrigger: { trigger: el, start: "top 90%" },
       })
@@ -33,16 +32,24 @@ export default function StatsStrip() {
   }, [])
 
   return (
-    <div ref={ref} className="border-y border-border bg-card/30 backdrop-blur-sm">
-      <div className="container mx-auto grid grid-cols-2 gap-6 px-4 py-8 sm:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} data-stat className="text-center">
-            <div className="bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-3xl font-extrabold text-transparent sm:text-4xl">
-              {s.value}
+    <div ref={ref} className="border-y border-white/[0.06] bg-[#0b0718]/50 backdrop-blur-sm">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center gap-2 border-b border-white/[0.05] py-2">
+          <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-signal text-signal" aria-hidden />
+          <span className="eyebrow text-signal">system online</span>
+          <span className="mono ml-auto text-[0.65rem] text-muted-foreground">MUSCAT · GMT+4</span>
+        </div>
+        <div className="grid grid-cols-2 divide-x divide-white/[0.05] sm:grid-cols-4">
+          {stats.map((s, i) => (
+            <div key={s.label} data-stat className="px-4 py-6 first:pl-0">
+              <div className="mono text-[0.65rem] text-muted-foreground">{String(i + 1).padStart(2, "0")}</div>
+              <div className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl">{s.value}</div>
+              <div className="mono mt-1 text-[0.65rem] uppercase tracking-widest text-muted-foreground">
+                {s.label}
+              </div>
             </div>
-            <div className="mt-1 text-xs uppercase tracking-widest text-foreground/60">{s.label}</div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )

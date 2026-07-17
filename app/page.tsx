@@ -24,9 +24,10 @@ export default function Home() {
 
         <StatsStrip />
 
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="md:col-span-2">
+        <div className="container mx-auto px-4 py-16">
+          {/* Brief + trajectory alongside the credentials rail */}
+          <div className="grid grid-cols-1 gap-x-10 lg:grid-cols-3">
+            <div className="lg:col-span-2">
               <Reveal>
                 <section id="summary" aria-label="Professional Summary">
                   <Summary />
@@ -37,31 +38,11 @@ export default function Home() {
                   <Experience />
                 </section>
               </Reveal>
-              <Reveal>
-                <section id="projects" aria-label="Featured Projects">
-                  <Projects />
-                </section>
-              </Reveal>
-              <Reveal>
-                <section id="more-projects" aria-label="More Projects">
-                  <MoreProjects />
-                </section>
-              </Reveal>
-              <Reveal>
-                <section id="contact" aria-label="Contact">
-                  <Contact />
-                </section>
-              </Reveal>
             </div>
-            <div>
+            <aside className="lg:col-span-1">
               <Reveal delay={0.05}>
                 <section id="education" aria-label="Education">
                   <Education />
-                </section>
-              </Reveal>
-              <Reveal delay={0.05}>
-                <section id="skills" aria-label="Skills">
-                  <Skills />
                 </section>
               </Reveal>
               <Reveal delay={0.05}>
@@ -74,8 +55,30 @@ export default function Home() {
                   <Awards />
                 </section>
               </Reveal>
-            </div>
+            </aside>
           </div>
+
+          {/* Full-width signature + manifests */}
+          <Reveal>
+            <section id="skills" aria-label="Skills">
+              <Skills />
+            </section>
+          </Reveal>
+          <Reveal>
+            <section id="projects" aria-label="Featured Projects">
+              <Projects />
+            </section>
+          </Reveal>
+          <Reveal>
+            <section id="more-projects" aria-label="More Projects">
+              <MoreProjects />
+            </section>
+          </Reveal>
+          <Reveal>
+            <section id="contact" aria-label="Contact">
+              <Contact />
+            </section>
+          </Reveal>
         </div>
       </main>
     </SmoothScrollProvider>

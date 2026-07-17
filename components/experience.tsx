@@ -1,74 +1,61 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Briefcase, Building2, Calendar, CheckCircle2, MapPin } from "lucide-react"
+import { CheckCircle2, MapPin } from "lucide-react"
+import Panel from "@/components/console/panel"
+import SectionHeading from "@/components/console/section-heading"
 import { experiences } from "@/lib/portfolio-data"
 
 export default function Experience() {
   return (
-    <Card className="mb-8 border border-border bg-card/60 backdrop-blur-sm">
-      <CardHeader className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/20 ring-1 ring-border">
-            <Briefcase className="h-5 w-5 text-fuchsia-400" aria-hidden />
-          </div>
-          <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
-            What I have done?
-          </CardTitle>
-        </div>
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" aria-hidden />
-      </CardHeader>
-      <CardContent>
-        <div className="relative">
-          <div className="absolute left-[11px] top-0 bottom-0 w-px bg-border" aria-hidden />
-          {experiences.map((exp, index) => (
-            <div key={index} className="relative mb-6 last:mb-0 pl-8">
-              {/* Timeline dot */}
-              <span
-                className="absolute left-0 top-2 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-400 to-cyan-400 shadow-sm"
-                aria-hidden
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-background" />
-              </span>
-
-              {/* Position */}
-              <div className="flex items-start gap-2">
-                <Briefcase className="mt-0.5 h-5 w-5 text-primary/80" />
-                <h3 className="text-lg font-semibold text-primary leading-tight">{exp.position}</h3>
-              </div>
-
-              {/* Company */}
-              <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-                <Building2 className="h-4 w-4" />
-                <span>{exp.company}</span>
-              </div>
-
-              {/* Location (optional) */}
-              {exp.location && (
-                <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{exp.location}</span>
+    <div className="mb-14">
+      <SectionHeading
+        label="EXPERIENCE_LOG"
+        title="Career trajectory"
+        accent="ion"
+        readout={`${experiences.length} STATIONS`}
+      />
+      <Panel className="p-6 sm:p-8">
+        <div className="relative pl-6">
+          {/* Signal rail */}
+          <div
+            aria-hidden
+            className="absolute left-[3px] top-1 bottom-1 w-px bg-gradient-to-b from-white/25 via-white/10 to-transparent"
+          />
+          {experiences.map((exp, i) => {
+            const color = exp.color ?? "#e879f9"
+            return (
+              <div key={i} className="relative mb-8 last:mb-0">
+                {/* Station dot */}
+                <span
+                  className="absolute -left-6 top-1.5 inline-flex h-2.5 w-2.5 items-center justify-center rounded-full"
+                  style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}
+                  aria-hidden
+                />
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h3 className="font-display text-lg font-semibold text-foreground">{exp.position}</h3>
+                  <span className="mono text-sm" style={{ color }}>
+                    @ {exp.company}
+                  </span>
+                  <span className="mono ml-auto text-[0.7rem] uppercase tracking-widest text-muted-foreground">
+                    {exp.date}
+                  </span>
                 </div>
-              )}
-
-              {/* Date */}
-              <Badge variant="secondary" className="mt-2 inline-flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>{exp.date}</span>
-              </Badge>
-
-              {/* Responsibilities */}
-              <ul className="mt-2 space-y-1.5 text-muted-foreground">
-                {exp.responsibilities.map((resp, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-fuchsia-400" />
-                    <span>{resp}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                {exp.location && (
+                  <div className="mono mt-1 flex items-center gap-1 text-[0.7rem] text-muted-foreground">
+                    <MapPin className="h-3 w-3" /> {exp.location}
+                  </div>
+                )}
+                <ul className="mt-3 space-y-1.5">
+                  {exp.responsibilities.map((r, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm leading-relaxed text-foreground/70">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color }} />
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
         </div>
-      </CardContent>
-    </Card>
+      </Panel>
+    </div>
   )
 }

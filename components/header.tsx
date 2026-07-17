@@ -1,18 +1,17 @@
-'use client'
+"use client"
 
 import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Mail, Linkedin, Github } from "lucide-react"
+import { Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { profile } from "@/lib/portfolio-data"
 
 const navItems = [
-  { id: "summary", label: "Summary" },
-  { id: "experience", label: "Experience" },
-  { id: "projects", label: "Projects" },
-  { id: "contact", label: "Contact" },
-  { id: "skills", label: "Skills" },
-  { id: "education", label: "Education" },
-  { id: "awards", label: "Awards" },
+  { id: "summary", label: "brief" },
+  { id: "experience", label: "log" },
+  { id: "projects", label: "builds" },
+  { id: "skills", label: "skills" },
+  { id: "contact", label: "channel" },
 ]
 
 export default function Header() {
@@ -22,68 +21,62 @@ export default function Header() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id)
-          }
+          if (entry.isIntersecting) setActive(entry.target.id)
         })
       },
-      { rootMargin: "-50% 0px -50% 0px", threshold: 0.01 }
+      { rootMargin: "-50% 0px -50% 0px", threshold: 0.01 },
     )
-
     navItems.forEach((item) => {
       const el = document.getElementById(item.id)
       if (el) observer.observe(el)
     })
-
     return () => observer.disconnect()
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur supports-[backdrop-filter]:bg-background/70 bg-background/70 border-b border-border">
+    <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-[#05010f]/70 backdrop-blur supports-[backdrop-filter]:bg-[#05010f]/60">
       <div className="container mx-auto px-4">
-        <div className="h-16 flex items-center justify-between">
+        <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 border border-border">
-              <AvatarImage
-                src="https://storage.rxresu.me/cm3e7oe3l00mgdbpo4c2nq7yn/pictures/cm3e7oe3l00mgdbpo4c2nq7yn.jpg"
-                alt="Farhad Navayazdan"
-              />
+            <Avatar className="h-9 w-9 border border-white/15">
+              <AvatarImage src={profile.avatar} alt={profile.name} />
               <AvatarFallback>FN</AvatarFallback>
             </Avatar>
             <div className="leading-tight">
-              <p className="text-sm font-semibold">Farhad Navayazdan</p>
-              <p className="text-xs text-foreground/60">Senior Software Developer</p>
+              <p className="font-display text-sm font-semibold text-foreground">{profile.name}</p>
+              <p className="mono flex items-center gap-1.5 text-[0.6rem] uppercase tracking-widest text-muted-foreground">
+                <span className="live-dot inline-block h-1 w-1 rounded-full bg-signal text-signal" aria-hidden />
+                {profile.title}
+              </p>
             </div>
           </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm">
+
+          <nav className="mono hidden items-center gap-6 text-xs uppercase tracking-widest md:flex">
             {navItems.map((item) => (
               <a
                 key={item.id}
                 href={`#${item.id}`}
                 className={`transition-colors ${
-                  active === item.id
-                    ? 'text-foreground font-medium'
-                    : 'text-foreground/70 hover:text-foreground'
+                  active === item.id ? "text-plasma" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
+                <span className="text-muted-foreground/40">/</span>
                 {item.label}
               </a>
             ))}
           </nav>
+
           <div className="flex items-center gap-2">
-            <Button asChild size="sm" className="rounded-full bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500">
-              <a href="mailto:cs.arcxx@gmail.com?subject=Hello%20Farhad&body=Hi%20Farhad%2C%0A%0A" aria-label="Contact Farhad via email">
-                <Mail className="mr-2 h-4 w-4" /> Contact
-              </a>
-            </Button>
-            <Button asChild variant="outline" size="icon" className="hidden sm:inline-flex">
-              <a href="https://www.linkedin.com/in/farhadnava/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                <Linkedin className="h-4 w-4" />
-              </a>
-            </Button>
-            <Button asChild variant="outline" size="icon" className="hidden sm:inline-flex">
-              <a href="https://github.com/falhad" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                <Github className="h-4 w-4" />
+            <span className="mono hidden text-[0.6rem] uppercase tracking-widest text-muted-foreground lg:inline">
+              {profile.location}
+            </span>
+            <Button
+              asChild
+              size="sm"
+              className="mono rounded-md border border-plasma/40 bg-plasma/10 text-xs uppercase tracking-widest text-plasma hover:bg-plasma/20"
+            >
+              <a href={`mailto:${profile.email}?subject=Hello%20Farhad`} aria-label="Contact Farhad">
+                <Mail className="mr-1.5 h-3.5 w-3.5" /> contact
               </a>
             </Button>
           </div>
@@ -92,4 +85,3 @@ export default function Header() {
     </header>
   )
 }
-
