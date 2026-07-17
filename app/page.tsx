@@ -16,8 +16,6 @@ export default function Home() {
       <Menu />
       <main className="relative z-10 min-h-screen text-foreground">
         <Hero />
-        {/* Smooth the light studio hero into the dark content. */}
-        <div aria-hidden className="h-40 bg-gradient-to-b from-[#E9E2D6] to-background" />
         <Statement />
         <Work />
         <Capabilities />

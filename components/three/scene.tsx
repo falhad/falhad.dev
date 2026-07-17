@@ -274,16 +274,30 @@ export default function Scene() {
   }
   return (
     <div className="absolute inset-0" aria-hidden>
-      <Canvas shadows camera={{ position: [0, 8.0, 2.6], fov: 42 }} dpr={[1, 1.9]} gl={{ antialias: true, alpha: true, toneMappingExposure: 0.5 }}>
-        <ambientLight intensity={0.25} />
-        <directionalLight position={[4, 6, 4]} intensity={0.9} color="#fff6ea" castShadow shadow-mapSize={[2048, 2048]} />
-        <directionalLight position={[-5, 3, 1]} intensity={0.25} color="#eef2f6" />
+      <Canvas shadows camera={{ position: [0, 8.0, 2.6], fov: 42 }} dpr={[1, 1.9]} gl={{ antialias: true, alpha: true, toneMappingExposure: 0.72 }}>
+        {/* Dark room: only a faint cool ambient fills the shadows. */}
+        <ambientLight intensity={0.06} color="#2a2c3a" />
+        {/* The desk lamp is the key light — a warm cone pooling on the desk. */}
+        <spotLight
+          position={[2.55, 2.75, -0.35]}
+          angle={0.92}
+          penumbra={0.82}
+          intensity={165}
+          distance={20}
+          decay={2}
+          color="#ffd9a0"
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-bias={-0.0002}
+        />
+        {/* Cool glow spilling from the laptop screen. */}
+        <pointLight position={[0, 0.7, 0.5]} intensity={5} distance={3.5} decay={2} color="#bcd2ff" />
         <Suspense fallback={null}>
           <Sequence />
-          <Environment preset="apartment" environmentIntensity={0.55} />
+          <Environment preset="apartment" environmentIntensity={0.1} />
         </Suspense>
         <EffectComposer>
-          <Bloom intensity={0.12} luminanceThreshold={0.85} luminanceSmoothing={0.9} mipmapBlur />
+          <Bloom intensity={0.16} luminanceThreshold={0.85} luminanceSmoothing={0.9} mipmapBlur />
         </EffectComposer>
       </Canvas>
     </div>
