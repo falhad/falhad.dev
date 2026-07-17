@@ -20,7 +20,7 @@ export default function Summary() {
             <CardContent className="space-y-6">
                 <p className="text-foreground/80 leading-relaxed">
                     Innovative <strong className="font-semibold text-foreground">Senior Software Developer</strong> with
-                    over 11 years of
+                    over 14 years of
                     experience delivering high-impact, scalable software solutions, including specialized applications
                     for the{" "}
                     <strong className="font-semibold text-foreground">oil and gas</strong> sector. Adept at solving

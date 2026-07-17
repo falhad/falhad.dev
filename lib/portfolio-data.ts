@@ -49,26 +49,28 @@ export type AwardItem = {
 export const profile = {
   name: "Farhad Navayazdan",
   title: "Senior Software Developer",
-  tagline: "I build fast, delightful software — from oil-rig monitoring to blockchain.",
+  tagline: "I build fast, delightful software — from oil & gas monitoring to blockchain and AI.",
+  location: "Muscat, Oman",
   email: "cs.arcxx@gmail.com",
   phoneDisplay: "+968 90130747",
   phoneTel: "+96890130747",
+  website: "https://falhad.dev",
   linkedin: "https://www.linkedin.com/in/farhadnava/",
   github: "https://github.com/falhad",
   avatar:
     "https://storage.rxresu.me/cm3e7oe3l00mgdbpo4c2nq7yn/pictures/cm3e7oe3l00mgdbpo4c2nq7yn.jpg",
   summary:
-    "Innovative Senior Software Developer with over 11 years of experience delivering high-impact, scalable software solutions, including specialized applications for the oil and gas sector. Adept at solving complex technical challenges, optimizing system performance, and leading projects from concept to deployment.",
+    "Innovative Senior Software Developer with over 14 years of experience delivering high-impact, scalable software solutions, including specialized applications for the oil and gas sector. Adept at solving complex technical challenges, optimizing system performance, and leading projects from concept to deployment.",
 }
 
 export const projects: Project[] = [
   {
-    name: "RIG-AI",
-    tagline: "AI rig monitoring",
+    name: "AI Energy",
+    tagline: "AI energy platform",
     description:
-      "AI-powered monitoring system for oil rigs, improving safety with real-time alerts and live video of rig activities.",
-    technologies: ["Python", "TensorFlow", "React", "WebRTC"],
-    links: { demo: "#", github: "#" },
+      "AI-powered energy platform with a scalable, event-driven backend (Python, async processing) and a modern Next.js frontend.",
+    technologies: ["Python", "Async", "Event-driven", "Next.js"],
+    links: { demo: "https://demo.ai-energy.om" },
     position: [-2.9, 3.0, -2],
     color: "#e879f9", // fuchsia
   },
@@ -76,31 +78,120 @@ export const projects: Project[] = [
     name: "Biratex",
     tagline: "Crypto exchange",
     description:
-      "Cryptocurrency exchange platform for buying and selling digital currencies, backed by an AI market-analysis engine.",
-    technologies: ["TypeScript", "MongoDB", "Spring Boot", "Kotlin"],
-    links: { demo: "#", github: "#" },
-    position: [3.7, 1.7, -2],
+      "Cryptocurrency exchange for buying and selling popular digital currencies — a secure, scalable platform built with Spring Boot and Jetpack Compose (Android & Desktop).",
+    technologies: ["Spring Boot", "Jetpack Compose", "Kotlin"],
+    links: { demo: "https://biratex.com/en/" },
+    position: [3.7, 1.9, -2],
     color: "#22d3ee", // cyan
   },
   {
-    name: "Parswater",
-    tagline: "Water tokenization",
+    name: "QMenu",
+    tagline: "Digital restaurant menus",
     description:
-      "Blockchain-based platform for water-share tokenization and trading, with decentralized transaction tracking and analytics.",
-    technologies: ["Blockchain", "Smart Contracts", "React", "Node.js"],
-    links: { demo: "#", github: "#" },
-    position: [1.6, -3.0, -3],
-    color: "#34d399", // emerald
+      "Flutter mobile app for digital restaurant menus, a proud partner of 14,000+ restaurants nationwide, improving customer experience and operational efficiency.",
+    technologies: ["Flutter", "Dart"],
+    links: { demo: "https://qmenu.us/" },
+    position: [4.4, 0.1, -2.5],
+    color: "#f59e0b", // amber
   },
   {
     name: "Sipan",
     tagline: "Inspection & lifecycle",
     description:
-      "Web and mobile application for equipment inspection and lifecycle management at NIOC, with offline support and RBAC.",
-    technologies: ["React", "React Native", "Node.js", "MongoDB"],
-    links: { demo: "#", github: "#" },
-    position: [4.0, -1.3, -1.5],
+      "Web and mobile application for equipment inspection, lifecycle management, ticketing and customizable reporting at NIOC. Kotlin Android app with a Django backend.",
+    technologies: ["Kotlin", "Django", "PostgreSQL"],
+    links: {},
+    position: [4.0, -1.6, -1.5],
     color: "#a78bfa", // violet
+  },
+  {
+    name: "Parswater",
+    tagline: "Water tokenization",
+    description:
+      "Blockchain platform for water-share tokenization — secure, transparent trading of water resources via smart contracts, with decentralized transaction tracking and analytics.",
+    technologies: ["Blockchain", "Smart Contracts", "React", "Node.js"],
+    links: {},
+    position: [1.6, -3.0, -3],
+    color: "#34d399", // emerald
+  },
+]
+
+export type MoreProject = {
+  name: string
+  date: string
+  description: string
+  url?: string
+}
+
+// The long tail of shipped projects from the CV — shown as a compact grid,
+// separate from the flagship projects featured in the 3D constellation.
+export const moreProjects: MoreProject[] = [
+  {
+    name: "TileMarket",
+    date: "Oct 2019",
+    description:
+      "Web platform for tile and stone sales with inventory management and order processing.",
+  },
+  {
+    name: "Wallpepper",
+    date: "Oct 2019",
+    description:
+      "Android wallpaper app with auto-changing wallpapers, categorized browsing, and user-specific suggestions.",
+  },
+  {
+    name: "Kish Drivers",
+    date: "Oct 2018",
+    description: "Taxi location service with GPS tracking and API integration.",
+  },
+  {
+    name: "Pixit",
+    date: "Aug 2018",
+    description:
+      "Telegram-based photo printing solution leveraging the platform's security and ease of use for efficient photo delivery.",
+  },
+  {
+    name: "Noisly",
+    date: "Jun 2018",
+    description: "Android music player with pre-defined playlists for enhancing sleep and mood.",
+  },
+  {
+    name: "MineDroid",
+    date: "Mar 2018",
+    description: "Android library for cryptocurrency mining using Android phones.",
+  },
+  {
+    name: "Carwasheto",
+    date: "Feb 2018",
+    description: "Platform connecting users with on-demand car wash services.",
+  },
+  {
+    name: "Xfit",
+    date: "Aug 2017",
+    description:
+      "Online gym management panel for coaches — workout plans, tutorials, progress tracking, and motivational content.",
+  },
+  {
+    name: "ToneTube",
+    date: "Feb 2017",
+    description:
+      "Social app for music sharing and karaoke — share music, sing karaoke, and interact with other users.",
+  },
+  {
+    name: "Fitpaz",
+    date: "Nov 2016",
+    description: "App assisting gym-goers with tailored nutritional advice and meal planning.",
+  },
+  {
+    name: "Voter",
+    date: "Apr 2016",
+    description:
+      "Real-time voting solution — Android client/server apps letting admins create polls and users respond live.",
+  },
+  {
+    name: "Moshtary",
+    date: "Sep 2015",
+    description:
+      "Platform for users to showcase their services, boosting personal and business visibility.",
   },
 ]
 
@@ -154,14 +245,23 @@ export const experiences: Experience[] = [
     ],
   },
   {
-    company: "Sandbad Co",
+    company: "Fardad Co",
+    position: "Fullstack Developer",
+    location: "Yazd, Iran",
+    date: "Mar 2019 to Jan 2020",
+    responsibilities: [
+      "Designed a platform for efficient tile and stone sales, with supply-chain tracking",
+    ],
+  },
+  {
+    company: "Sandbad Accelerator",
     position: "Mentor / Full-stack Developer",
     location: "Yazd, Iran",
     date: "Jun 2015 to Feb 2019",
     responsibilities: [
-      "Mentored startup teams on software development and deployment",
-      "Developed a Vue-based automated cryptocurrency trading assistant",
-      "Built an administrative panel for user management and delivery tracking",
+      "Mentored startup teams, sharing insights from software development and deployment",
+      "Developed a Vue-based automated cryptocurrency trading assistant and a Java-based Android social platform",
+      "Built an administrative panel for user management and delivery tracking with Android app integration",
     ],
   },
   {
@@ -180,13 +280,27 @@ export const skills: SkillCategory[] = [
   { category: "General", items: ["System Design", "Test Driven Development", "Jira", "Micro-Services"] },
   {
     category: "Programming Languages",
-    items: ["Java", "Kotlin", "Python", "Rust", "TypeScript", "JavaScript", "PHP"],
+    items: ["Java", "Kotlin", "Python", "Rust", "Dart", "TypeScript", "JavaScript", "PHP"],
   },
   {
     category: "Frameworks",
-    items: ["Spring Boot", "React.js", "Next.js", "Jetpack Compose", "Laravel", "Express.js"],
+    items: [
+      "Spring Boot",
+      "React.js",
+      "Next.js",
+      "Jetpack Compose",
+      "KMP",
+      "Flutter",
+      "Django",
+      "FastAPI",
+      "Laravel",
+      "Express.js",
+    ],
   },
-  { category: "Tools And DB's", items: ["Git", "Docker", "CI/CD", "PostgreSQL", "MongoDB", "Redis"] },
+  {
+    category: "Tools And DB's",
+    items: ["Git", "Docker", "CI/CD", "PostgreSQL", "MongoDB", "Redis", "Neo4j"],
+  },
   {
     category: "Networking",
     items: [
@@ -254,8 +368,8 @@ export const awards: AwardItem[] = [
 ]
 
 export const stats = [
-  { value: "11+", label: "Years shipping" },
-  { value: "6", label: "Companies led / built" },
+  { value: "14+", label: "Years shipping" },
+  { value: "20+", label: "Projects delivered" },
   { value: "40%", label: "Perf gains delivered" },
   { value: "∞", label: "Coffees consumed" },
 ]

@@ -6,6 +6,7 @@ import Skills from "@/components/skills"
 import Certifications from "@/components/certifications"
 import Awards from "@/components/awards"
 import Projects from "@/components/projects"
+import MoreProjects from "@/components/more-projects"
 import Hero from "@/components/hero"
 import Contact from "@/components/contact"
 import SmoothScrollProvider from "@/components/scroll/smooth-scroll-provider"
@@ -39,6 +40,11 @@ export default function Home() {
               <Reveal>
                 <section id="projects" aria-label="Featured Projects">
                   <Projects />
+                </section>
+              </Reveal>
+              <Reveal>
+                <section id="more-projects" aria-label="More Projects">
+                  <MoreProjects />
                 </section>
               </Reveal>
               <Reveal>
