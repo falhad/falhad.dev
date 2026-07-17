@@ -176,8 +176,10 @@ function useNameTexture() {
 // Camera keyframes: top-down on the desk → eye-level looking at the open laptop.
 const CAM_TOP = new THREE.Vector3(0, 8.0, 2.6)
 const CAM_EYE = new THREE.Vector3(0, 1.7, 7.4)
+const CAM_INTO = new THREE.Vector3(0, 1.12, 1.4) // dolly right up to the screen
 const LOOK_TOP = new THREE.Vector3(0, 0, 0.3)
 const LOOK_EYE = new THREE.Vector3(0, 0.7, 0)
+const LOOK_INTO = new THREE.Vector3(0, 1.12, -0.2) // straight into the screen
 
 const LID_CLOSED = 1.78 // radians; model default (0) is open
 const MUG_POS: [number, number, number] = [3.0, 0, 0.75]
@@ -222,21 +224,31 @@ function Sequence() {
     px.current += (pointer.x - px.current) * (1 - Math.pow(0.002, dt))
     py.current += (pointer.y - py.current) * (1 - Math.pow(0.002, dt))
 
-    const camT = smooth(invlerp(p, 0.08, 0.6))
+    // 1) top-down → eye-level, 2) then dolly into the screen at the very end.
+    const camT = smooth(invlerp(p, 0.08, 0.55))
+    const pushT = smooth(invlerp(p, 0.74, 0.97))
     v3lerp(camPos.current, CAM_TOP, CAM_EYE, camT)
     v3lerp(camLook.current, LOOK_TOP, LOOK_EYE, camT)
+    v3lerp(camPos.current, camPos.current, CAM_INTO, pushT)
+    v3lerp(camLook.current, camLook.current, LOOK_INTO, pushT)
+    const parallax = camT * (1 - pushT)
     state.camera.position.set(
-      camPos.current.x + px.current * 0.5 * camT,
-      camPos.current.y + py.current * 0.3 * camT,
+      camPos.current.x + px.current * 0.5 * parallax,
+      camPos.current.y + py.current * 0.3 * parallax,
       camPos.current.z,
     )
     state.camera.lookAt(camLook.current)
 
     if (pivot) pivot.rotation.x = lerp(LID_CLOSED, 0, smooth(invlerp(p, 0.15, 0.6)))
-    if (laptop.current) laptop.current.rotation.y = px.current * 0.05
+    if (laptop.current) laptop.current.rotation.y = px.current * 0.05 * (1 - pushT)
 
-    // Name fades onto the screen once the lid is most of the way open.
-    if (nameMat.current) nameMat.current.opacity = smooth(invlerp(p, 0.5, 0.72))
+    // Name fades onto the screen once the lid opens, then fades back out as the
+    // camera pushes into the (black) screen — so the transition ends in black.
+    if (nameMat.current) {
+      const fadeIn = smooth(invlerp(p, 0.5, 0.68))
+      const fadeOut = smooth(invlerp(p, 0.82, 0.95))
+      nameMat.current.opacity = fadeIn * (1 - fadeOut)
+    }
   })
 
   return (
