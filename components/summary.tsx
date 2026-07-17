@@ -22,8 +22,8 @@ export default function Summary() {
           live video, and WITS data at scale. Equally at home shipping{" "}
           <strong className="font-semibold text-foreground">blockchain</strong>,{" "}
           <strong className="font-semibold text-foreground">crypto exchange</strong>, and{" "}
-          <strong className="font-semibold text-foreground">AI</strong> platforms, and leading teams from
-          concept to deployment.
+          <strong className="font-semibold text-foreground">LLM / RAG AI</strong> platforms, and leading
+          teams from concept to deployment.
         </p>
 
         <div className="mt-7 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.04] sm:grid-cols-2 lg:grid-cols-4">

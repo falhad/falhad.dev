@@ -1,9 +1,10 @@
-import { Boxes, Code2, Cpu, Network, Radio } from "lucide-react"
+import { Boxes, Brain, Code2, Cpu, Network, Radio } from "lucide-react"
 import Panel from "@/components/console/panel"
 import SectionHeading from "@/components/console/section-heading"
 import { skills } from "@/lib/portfolio-data"
 
 const META: Record<string, { accent: string; icon: typeof Code2; code: string }> = {
+  "AI & LLM": { accent: "#818cf8", icon: Brain, code: "GENAI" },
   "Programming Languages": { accent: "#e879f9", icon: Code2, code: "LANG" },
   Frameworks: { accent: "#22d3ee", icon: Boxes, code: "FRWK" },
   "Tools And DB's": { accent: "#34d399", icon: Cpu, code: "INFRA" },

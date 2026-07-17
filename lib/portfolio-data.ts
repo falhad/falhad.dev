@@ -120,6 +120,26 @@ export const projects: Project[] = [
     position: [1.6, -3.0, -3],
     color: "#34d399", // emerald
   },
+  {
+    name: "aiassist.chat",
+    tagline: "AI support widget SaaS",
+    description:
+      "AI customer-support chat widget — RAG over your own knowledge base, live analytics, and team tools. A self-built SaaS platform.",
+    technologies: ["Next.js", "Rust", "LLMs", "RAG"],
+    links: { demo: "https://aiassist.chat" },
+    position: [0, 0, 0],
+    color: "#818cf8", // indigo
+  },
+  {
+    name: "ellix.ai",
+    tagline: "Generative-AI platform",
+    description:
+      "A generative-AI platform built in free time, exploring LLM-powered workflows and assistants.",
+    technologies: ["LLMs", "RAG", "Next.js"],
+    links: { demo: "https://ellix.ai" },
+    position: [0, 0, 0],
+    color: "#22d3ee", // cyan
+  },
 ]
 
 export type MoreProject = {
@@ -211,6 +231,8 @@ export const experiences: Experience[] = [
     scenePos: [-2.0, 2.4, 1.2],
     color: "#e879f9",
     responsibilities: [
+      "Built LLM chatbots and AI assistants with RAG over internal knowledge bases",
+      "Developed drone and fleet-management systems for field operations",
       "Improved system performance by 40% through code optimization",
       "Implemented WebRTC for real-time video streaming of rig activities",
       "Integrated Socket.IO for live WITS data transmission",
@@ -304,7 +326,14 @@ export const experiences: Experience[] = [
 ]
 
 export const skills: SkillCategory[] = [
-  { category: "General", items: ["System Design", "Test Driven Development", "Jira", "Micro-Services"] },
+  {
+    category: "AI & LLM",
+    items: ["LLMs", "RAG", "AI Agents", "Vector DBs", "Prompt Engineering", "Embeddings", "LangChain"],
+  },
+  {
+    category: "General",
+    items: ["System Design", "Test Driven Development", "Micro-Services", "Fleet & Drone Systems", "Jira"],
+  },
   {
     category: "Programming Languages",
     items: ["Java", "Kotlin", "Python", "Rust", "Dart", "TypeScript", "JavaScript", "PHP"],
@@ -429,10 +458,24 @@ export const skillPlanets: SkillPlanet[] = [
     roles: [{ company: "Esbaar", note: "WebRTC rig video + Socket.IO WITS streaming; +40% perf" }],
   },
   {
+    name: "AI · LLM & RAG",
+    code: "GENAI",
+    color: "#818cf8",
+    scenePos: [2.6, 1.4, -1.0],
+    blurb:
+      "LLM chatbots, AI assistants and RAG pipelines over private knowledge bases — plus self-built AI SaaS platforms.",
+    tech: ["LLMs", "RAG", "AI Agents", "Vector DBs", "Prompt Engineering", "Embeddings"],
+    projects: ["aiassist.chat", "ellix.ai"],
+    roles: [
+      { company: "Esbaar", note: "LLM chatbots & AI assistants with RAG" },
+      { company: "Independent", note: "aiassist.chat & ellix.ai — self-built AI platforms" },
+    ],
+  },
+  {
     name: "Mobile Engineering",
     code: "MOBILE",
     color: "#22d3ee",
-    scenePos: [2.6, 1.2, -1.5],
+    scenePos: [-2.8, -0.2, -3.8],
     blurb:
       "Native and cross-platform apps — from a menu platform serving 14,000+ restaurants to field inspection tooling.",
     tech: ["Kotlin", "Flutter", "Dart", "Jetpack Compose", "KMP"],
@@ -446,7 +489,7 @@ export const skillPlanets: SkillPlanet[] = [
     name: "Backend & AI",
     code: "BACKEND",
     color: "#a78bfa",
-    scenePos: [-2.8, -0.4, -4.0],
+    scenePos: [2.8, 1.2, -6.2],
     blurb:
       "Scalable, event-driven services and AI platforms — from stock-market analytics to energy forecasting.",
     tech: ["Python", "Spring Boot", "FastAPI", "Django", "Event-driven"],
@@ -460,7 +503,7 @@ export const skillPlanets: SkillPlanet[] = [
     name: "Frontend & UX",
     code: "FRONTEND",
     color: "#f59e0b",
-    scenePos: [2.8, 1.0, -6.5],
+    scenePos: [-2.6, 1.3, -8.6],
     blurb:
       "Dashboards and product UIs — real-time monitoring consoles and modern web apps that operators actually enjoy.",
     tech: ["React", "Next.js", "TypeScript"],
@@ -474,7 +517,7 @@ export const skillPlanets: SkillPlanet[] = [
     name: "Blockchain",
     code: "CHAIN",
     color: "#34d399",
-    scenePos: [-2.4, -0.6, -9.0],
+    scenePos: [2.2, -0.5, -11.0],
     blurb:
       "Tokenization and decentralized platforms — a water-share trading system integrated by Mapna MD3.",
     tech: ["Smart Contracts", "Blockchain", "Web3", "Solidity"],
@@ -485,7 +528,7 @@ export const skillPlanets: SkillPlanet[] = [
     name: "Infra & Networking",
     code: "INFRA",
     color: "#38bdf8",
-    scenePos: [2.2, 1.2, -11.5],
+    scenePos: [-2.2, 1.2, -13.5],
     blurb:
       "CCNP-level networking plus DevOps — CI/CD pipelines, containers and data stores running reliably at scale.",
     tech: ["Docker", "Kubernetes", "CI/CD", "PostgreSQL", "Redis", "Neo4j", "CCNP"],
