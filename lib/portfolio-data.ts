@@ -208,7 +208,7 @@ export const experiences: Experience[] = [
     location: "Muscat, Oman",
     date: "Oct 2023 to Present",
     when: "2023 — Now",
-    scenePos: [-3.8, 2.7, 2.0],
+    scenePos: [-2.0, 2.4, 1.2],
     color: "#e879f9",
     responsibilities: [
       "Improved system performance by 40% through code optimization",

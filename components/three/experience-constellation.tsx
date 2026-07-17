@@ -97,20 +97,32 @@ function ExperienceNode({ exp, onSelect, active, dimmed, size, glowTex }: NodePr
           <sphereGeometry args={[0.9, 8, 8]} />
         </mesh>
 
-        <Html center distanceFactor={9} position={[0, 1.1 * size, 0]} style={{ pointerEvents: "none" }}>
+        <Html center distanceFactor={8} position={[0, 1.2 * size, 0]} style={{ pointerEvents: "none" }}>
           <div
             style={{
-              opacity: dimmed ? 0.4 : 1,
-              transform: `scale(${hovered || active ? 1.05 : 1})`,
+              opacity: dimmed ? 0.35 : 1,
+              transform: `scale(${hovered || active ? 1.06 : 1})`,
               transition: "opacity .3s, transform .2s",
             }}
-            className="select-none whitespace-nowrap text-center"
+            className="select-none whitespace-nowrap"
           >
-            <div className="text-[13px] font-semibold tracking-tight text-white drop-shadow">
-              {exp.company}
+            {/* HUD instrument tag — legible over bloom, professional type */}
+            <div className="rounded-md border border-white/15 bg-black/60 px-3 py-1.5 text-center shadow-[0_8px_24px_-6px_rgba(0,0,0,0.9)] backdrop-blur-md">
+              <div className="font-display text-[13px] font-semibold leading-tight text-white">
+                {exp.company}
+              </div>
+              <div
+                className="mono mt-0.5 text-[9px] uppercase leading-none tracking-[0.18em]"
+                style={{ color: exp.color }}
+              >
+                {exp.position}
+              </div>
+              <div className="mono mt-1 text-[9px] leading-none tracking-widest text-white/50">
+                {exp.when}
+              </div>
             </div>
-            <div className="text-[10px] text-white/70">{exp.position}</div>
-            <div className="text-[9px] uppercase tracking-widest text-white/45">{exp.when}</div>
+            {/* connector tick down to the star */}
+            <div className="mx-auto mt-1 h-2 w-px" style={{ background: `linear-gradient(${exp.color}, transparent)` }} />
           </div>
         </Html>
       </group>
