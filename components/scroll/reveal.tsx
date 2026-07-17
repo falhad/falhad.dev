@@ -1,52 +1,50 @@
 "use client"
-
 import { useEffect, useRef } from "react"
-import gsap from "gsap"
+import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useReducedMotion } from "@/lib/use-reduced-motion"
 
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger)
-}
+gsap.registerPlugin(ScrollTrigger)
 
-type Props = {
+// Fades + rises children into view on scroll. Under reduced-motion it renders
+// children fully visible with no animation.
+export default function Reveal({
+  children,
+  delay = 0,
+  y = 40,
+  className,
+}: {
   children: React.ReactNode
-  className?: string
-  /** Delay in seconds before the reveal starts. */
   delay?: number
-  /** Vertical travel distance in px. */
   y?: number
-}
-
-// Scroll-reveal wrapper: fades + slides its children up when scrolled into view.
-// Honors prefers-reduced-motion by rendering the content immediately, no animation.
-export default function Reveal({ children, className, delay = 0, y = 28 }: Props) {
+  className?: string
+}) {
   const ref = useRef<HTMLDivElement>(null)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
+    if (reduced || !ref.current) return
     const el = ref.current
-    if (!el) return
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
-
-    const ctx = gsap.context(() => {
-      gsap.from(el, {
-        opacity: 0,
-        y,
-        duration: 0.8,
+    const anim = gsap.fromTo(
+      el,
+      { autoAlpha: 0, y },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.9,
         delay,
         ease: "power3.out",
-        scrollTrigger: {
-          trigger: el,
-          start: "top 85%",
-          toggleActions: "play none none none",
-        },
-      })
-    }, ref)
-
-    return () => ctx.revert()
-  }, [delay, y])
+        scrollTrigger: { trigger: el, start: "top 85%", once: true },
+      },
+    )
+    return () => {
+      anim.scrollTrigger?.kill()
+      anim.kill()
+    }
+  }, [reduced, delay, y])
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={className} style={reduced ? undefined : { opacity: 0 }}>
       {children}
     </div>
   )
