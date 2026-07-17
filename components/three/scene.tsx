@@ -1,122 +1,76 @@
 "use client"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { MeshDistortMaterial, Environment, Text3D, Center } from "@react-three/drei"
+import { RoundedBox, Environment, Float } from "@react-three/drei"
 import { EffectComposer, Bloom } from "@react-three/postprocessing"
-import { Suspense, useRef, useState } from "react"
+import { Suspense, useRef } from "react"
 import * as THREE from "three"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
 
-// The story: one 3D code-glyph protagonist persists across the page, drifting
-// side to side and melting from one programming symbol into the next as each
-// section arrives.
-const SECTION_IDS = ["hero", "statement", "work", "capabilities", "journey", "recognition", "contact"]
-const SYMBOLS = ["{ }", "< >", "( )", "/>", ";", "#", "@"]
-const COLORS = ["#C29B6B", "#CFA15C", "#A85A3C", "#C8873F", "#B5714A", "#BE8A3C", "#C29B6B"]
-// Smaller on content-dense sections so the text can breathe.
-const SCALES = [1.0, 1.0, 0.7, 0.62, 0.92, 0.72, 0.95]
-const DENSE = new Set([2, 3, 5]) // work, capabilities, recognition — push further right
-const FONT = "/fonts/helvetiker_bold.typeface.json"
-const MELT_DURATION = 3.3 // very slow, so the melt reads as a smooth transition
+const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
 
-function Protagonist() {
+// A realistic studio-lit laptop — the signature object. It floats and gently
+// turns in the hero like a product shot, then rises out of frame as the viewer
+// scrolls into the content so it never competes with the text below.
+function Laptop() {
   const grp = useRef<THREE.Group>(null)
-  const mat = useRef<any>(null)
-  const { viewport } = useThree()
-  const [shown, setShown] = useState(0) // glyph currently displayed
+  const { viewport, pointer } = useThree()
+  const px = useRef(0)
+  const py = useRef(0)
 
-  const s = useRef({
-    target: 0,
-    melt: 0, // 0..1 transition; 0 = idle
-    swapped: true,
-    color: new THREE.Color(COLORS[0]),
-  })
-
-  useFrame((_, dtRaw) => {
+  useFrame((state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
     const g = grp.current
     if (!g) return
-    const st = s.current
+    // Scroll progress across the first viewport (hero → content).
+    const p = clamp(window.scrollY / window.innerHeight, 0, 1)
+    // Damp the cursor for a smooth parallax tilt.
+    px.current += (pointer.x - px.current) * (1 - Math.pow(0.0015, dt))
+    py.current += (pointer.y - py.current) * (1 - Math.pow(0.0015, dt))
+    const t = state.clock.elapsedTime
 
-    // Nearest section to viewport center.
-    const mid = window.innerHeight / 2
-    let best = 0
-    let bestDist = Infinity
-    for (let i = 0; i < SECTION_IDS.length; i++) {
-      const el = document.getElementById(SECTION_IDS[i])
-      if (!el) continue
-      const r = el.getBoundingClientRect()
-      const d = Math.abs(r.top + r.height / 2 - mid)
-      if (d < bestDist) {
-        bestDist = d
-        best = i
-      }
-    }
-
-    // Start a melt when the active section changes.
-    if (best !== st.target && st.melt === 0) {
-      st.target = best
-      st.melt = 0.0001
-      st.swapped = false
-      st.color.set(COLORS[best])
-    }
-    if (st.melt > 0) {
-      st.melt += dt / MELT_DURATION
-      if (!st.swapped && st.melt >= 0.5) {
-        setShown(st.target) // swap the glyph at peak melt
-        st.swapped = true
-      }
-      if (st.melt >= 1) st.melt = 0
-    }
-
-    // Distortion peaks mid-transition (liquid melt) but stays low otherwise so
-    // the glyph reads.
-    // Ease the pulse (sine^1.5) so it swells and settles gently rather than
-    // snapping, and drive distortion fully to a blob at the peak so the glyph
-    // swap is hidden inside a formless melt.
-    const meltPulse = st.melt > 0 ? Math.pow(Math.sin(Math.PI * st.melt), 1.5) : 0
-    if (mat.current) {
-      mat.current.distort = 0.12 + meltPulse * 1.0
-      mat.current.color.lerp(st.color, 1 - Math.pow(0.002, dt))
-    }
-
-    // Stays pinned to the right the whole way — it only morphs in place.
-    // Pushed a little further right on content-dense sections.
-    const offset = Math.min(viewport.width * 0.24, 2.6) * (DENSE.has(shown) ? 1.25 : 1)
-    g.position.x += (offset - g.position.x) * (1 - Math.pow(0.1, dt))
-    g.position.y += (0 - g.position.y) * (1 - Math.pow(0.1, dt))
-    // Slow, continuous rotation with a soft extra turn during the melt.
-    g.rotation.y += dt * (0.16 + meltPulse * 0.5)
-    g.rotation.x = Math.sin(performance.now() * 0.0002) * 0.12
-    const scale = SCALES[shown] * (1 - meltPulse * 0.2)
-    g.scale.setScalar(scale)
+    g.position.x = Math.min(viewport.width * 0.15, 1.6)
+    g.position.y = 0.1 + p * 6 // lifts up and out of frame as you leave the hero
+    g.scale.setScalar(1 - p * 0.35)
+    // 3/4 product angle: a slight base turn, gentle idle sway, cursor parallax.
+    g.rotation.y = -0.5 + Math.sin(t * 0.25) * 0.16 + px.current * 0.32 + p * 0.4
+    g.rotation.x = 0.02 + py.current * 0.1
   })
 
   return (
     <group ref={grp}>
-      <Center key={shown}>
-        <Text3D
-          font={FONT}
-          size={1.6}
-          height={0.5}
-          bevelEnabled
-          bevelThickness={0.04}
-          bevelSize={0.03}
-          bevelSegments={4}
-          curveSegments={8}
-        >
-          {SYMBOLS[shown]}
-          <MeshDistortMaterial
-            ref={mat}
-            color={COLORS[0]}
-            emissive="#7A2F12"
-            emissiveIntensity={0.55}
-            roughness={0.15}
-            metalness={0.35}
-            distort={0.12}
-            speed={1.4}
-          />
-        </Text3D>
-      </Center>
+      <Float speed={1.1} rotationIntensity={0.15} floatIntensity={0.5}>
+        {/* Deck (aluminum unibody) */}
+        <RoundedBox args={[3, 0.14, 2]} radius={0.05} smoothness={4}>
+          <meshStandardMaterial color="#a7abb2" metalness={0.85} roughness={0.34} />
+        </RoundedBox>
+        {/* Keyboard well */}
+        <mesh position={[0, 0.082, 0.12]}>
+          <boxGeometry args={[2.62, 0.02, 1.32]} />
+          <meshStandardMaterial color="#17181c" metalness={0.4} roughness={0.6} />
+        </mesh>
+        {/* Trackpad */}
+        <mesh position={[0, 0.083, 0.74]}>
+          <boxGeometry args={[0.92, 0.02, 0.5]} />
+          <meshStandardMaterial color="#2a2c31" metalness={0.5} roughness={0.4} />
+        </mesh>
+        {/* Lid, hinged at the back edge and leaned open */}
+        <group position={[0, 0.04, -0.98]} rotation={[-1.5, 0, 0]}>
+          <RoundedBox args={[3, 2, 0.08]} radius={0.04} smoothness={4} position={[0, 1, 0]}>
+            <meshStandardMaterial color="#a7abb2" metalness={0.85} roughness={0.34} />
+          </RoundedBox>
+          {/* Glowing display */}
+          <mesh position={[0, 1, 0.05]}>
+            <planeGeometry args={[2.78, 1.78]} />
+            <meshStandardMaterial
+              color="#0c1622"
+              emissive="#357fc4"
+              emissiveIntensity={1.3}
+              roughness={0.2}
+              metalness={0}
+            />
+          </mesh>
+        </group>
+      </Float>
     </group>
   )
 }
@@ -130,23 +84,30 @@ export default function Scene() {
         className="pointer-events-none fixed inset-0 z-0"
         style={{
           background:
-            "radial-gradient(50% 50% at 72% 30%, #C29B6B44, transparent 70%), radial-gradient(45% 45% at 28% 70%, #A85A3C2e, transparent 70%)",
+            "radial-gradient(50% 50% at 72% 32%, #C29B6B33, transparent 70%), radial-gradient(45% 45% at 30% 68%, #A85A3C22, transparent 70%)",
         }}
       />
     )
   }
   return (
     <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
-      <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true }}>
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[3, 4, 5]} intensity={1.4} color="#fff3e0" />
-        <directionalLight position={[-4, -2, 2]} intensity={0.6} color="#A85A3C" />
+      <Canvas
+        camera={{ position: [0, 1.15, 6.4], fov: 40 }}
+        dpr={[1, 1.9]}
+        gl={{ antialias: true, alpha: true }}
+        onCreated={({ camera }) => camera.lookAt(0, 0.35, 0)}
+      >
+        {/* Studio lighting: warm key, cool fill, rim. */}
+        <ambientLight intensity={0.35} />
+        <directionalLight position={[5, 6, 4]} intensity={1.8} color="#fff2e0" />
+        <directionalLight position={[-5, 2, -2]} intensity={0.5} color="#9fb4d0" />
+        <directionalLight position={[0, 3, -6]} intensity={0.9} color="#ffd9a8" />
         <Suspense fallback={null}>
-          <Protagonist />
-          <Environment preset="sunset" />
+          <Laptop />
+          <Environment preset="city" />
         </Suspense>
         <EffectComposer>
-          <Bloom intensity={1.35} luminanceThreshold={0.28} luminanceSmoothing={0.9} mipmapBlur />
+          <Bloom intensity={0.45} luminanceThreshold={0.78} luminanceSmoothing={0.9} mipmapBlur />
         </EffectComposer>
       </Canvas>
     </div>
