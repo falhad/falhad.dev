@@ -128,7 +128,7 @@ export const projects: Project[] = [
     technologies: ["Next.js", "Rust", "LLMs", "RAG"],
     links: { demo: "https://aiassist.chat" },
     position: [0, 0, 0],
-    color: "#818cf8", // indigo
+    color: "#6366f1", // indigo
   },
   {
     name: "ellix.ai",
@@ -447,20 +447,9 @@ export type SkillPlanet = {
 // Ordered near -> far so scrolling advances planet by planet, present-most first.
 export const skillPlanets: SkillPlanet[] = [
   {
-    name: "Real-time & Streaming",
-    code: "REALTIME",
-    color: "#e879f9",
-    scenePos: [-2.0, 2.2, 1.5],
-    blurb:
-      "Live rig monitoring at scale — real-time video and WITS telemetry delivered with sub-second latency for distributed teams.",
-    tech: ["WebRTC", "Socket.IO", "WITS", "Netty", "Video Optimization"],
-    projects: ["AI Energy"],
-    roles: [{ company: "Esbaar", note: "WebRTC rig video + Socket.IO WITS streaming; +40% perf" }],
-  },
-  {
     name: "AI · LLM & RAG",
     code: "GENAI",
-    color: "#818cf8",
+    color: "#6366f1",
     scenePos: [2.6, 1.4, -1.0],
     blurb:
       "LLM chatbots, AI assistants and RAG pipelines over private knowledge bases — plus self-built AI SaaS platforms.",
@@ -470,6 +459,17 @@ export const skillPlanets: SkillPlanet[] = [
       { company: "Esbaar", note: "LLM chatbots & AI assistants with RAG" },
       { company: "Independent", note: "aiassist.chat & ellix.ai — self-built AI platforms" },
     ],
+  },
+  {
+    name: "Real-time & Streaming",
+    code: "REALTIME",
+    color: "#e879f9",
+    scenePos: [-2.0, 2.2, 1.5],
+    blurb:
+      "Live rig monitoring at scale — real-time video and WITS telemetry delivered with sub-second latency for distributed teams.",
+    tech: ["WebRTC", "Socket.IO", "WITS", "Netty", "Video Optimization"],
+    projects: ["AI Energy"],
+    roles: [{ company: "Esbaar", note: "WebRTC rig video + Socket.IO WITS streaming; +40% perf" }],
   },
   {
     name: "Mobile Engineering",

@@ -9,11 +9,11 @@ export default function Effects({ reducedMotion = false }: { reducedMotion?: boo
   return (
     <EffectComposer multisampling={reducedMotion ? 0 : 4}>
       <Bloom
-        intensity={reducedMotion ? 0.6 : 1.15}
-        luminanceThreshold={0.15}
+        intensity={reducedMotion ? 0.55 : 0.9}
+        luminanceThreshold={0.22}
         luminanceSmoothing={0.9}
         mipmapBlur
-        radius={0.75}
+        radius={0.7}
       />
       <Vignette offset={0.25} darkness={0.85} eskil={false} />
     </EffectComposer>
