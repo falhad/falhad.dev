@@ -175,10 +175,10 @@ const LID_CLOSED = 1.78 // radians; model default (0) is open
 const MUG_POS: [number, number, number] = [3.0, 0, 0.75]
 const NOTEBOOK_POS: [number, number, number] = [-2.95, 0, 1.35]
 const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
-const FLOWER_POS: [number, number, number] = [-3.05, 0, -0.95]
+const FLOWER_POS: [number, number, number] = [-2.0, 0, -1.65]
 const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
-const FRAME_POS: [number, number, number] = [-2.45, 0, -1.15]
+const FRAME_POS: [number, number, number] = [-3.25, 0, -0.55]
 const FRAME_ROT: [number, number, number] = [0, -0.85, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
@@ -197,9 +197,9 @@ function Sequence() {
   const mug = useAnchored(MUG, 1.0, "bottom")
   const desk = useAnchored(DESK, 8.5, "top")
   const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
-  const flower = useAnchored(FLOWER, 0.9, "bottom")
+  const flower = useAnchored(FLOWER, 0.72, "bottom")
   const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
-  const frame = usePhotoFrame(1.5)
+  const frame = usePhotoFrame(1.25)
   const nameTex = useNameTexture()
 
   useFrame((state, dtRaw) => {
