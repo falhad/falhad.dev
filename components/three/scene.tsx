@@ -8,7 +8,7 @@ import { profile } from "@/lib/portfolio-data"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
 
 const LAPTOP = "/models/macbook.glb" // user-supplied MacBook Pro
-const MUG = "/models/coffee_latte_in_mug_with_saucer.glb" // user-supplied
+const MUG = "/models/mug_latte.glb" // user-supplied (converted spec-gloss -> metal-rough)
 const DESK = "/models/computer_desk.glb" // user-supplied
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
 
@@ -125,9 +125,9 @@ const LOOK_EYE = new THREE.Vector3(0, 0.7, 0)
 
 const LID_CLOSED = 1.78 // radians; model default (0) is open
 const MUG_POS: [number, number, number] = [2.1, 0, 0.5]
-const SCREEN_POS: [number, number, number] = [0, 1.0, -0.12]
+const SCREEN_POS: [number, number, number] = [0, 1.06, -0.08]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
-const SCREEN_SIZE: [number, number] = [1.5, 0.95]
+const SCREEN_SIZE: [number, number] = [2.05, 1.29]
 
 function Sequence() {
   const laptop = useRef<THREE.Group>(null)

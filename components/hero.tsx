@@ -19,6 +19,13 @@ export default function Hero() {
 
         <h1 className="sr-only">{profile.name}</h1>
 
+        {/* Soft light scrim so the overlay text stays legible over the desk. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[42vh]"
+          style={{ background: "linear-gradient(to top, #E9E2D6 14%, rgba(233,226,214,0))" }}
+        />
+
         {/* Minimal overlay — dark-on-light for the studio hero. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-14 px-6 md:px-12">
           <div className="mx-auto max-w-6xl">
