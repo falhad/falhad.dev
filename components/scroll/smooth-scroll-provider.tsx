@@ -2,28 +2,37 @@
 
 import { useEffect } from "react"
 import Lenis from "lenis"
+import { gsap } from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useReducedMotion } from "@/lib/use-reduced-motion"
 
-// Wraps the app in Lenis smooth scrolling. Respects prefers-reduced-motion:
-// when set, it does nothing and the browser's native scroll is used.
+gsap.registerPlugin(ScrollTrigger)
+
+// Wraps the app in Lenis smooth scrolling, tuned heavier for a weighty glide.
+// Respects prefers-reduced-motion: when set, Lenis is disabled and native
+// scroll is used. Anchor links (href="#id") are intercepted so the immersive
+// corner menu can glide to sections.
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
+  const reduced = useReducedMotion()
+
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (reduced) return
 
     const lenis = new Lenis({
-      duration: 1.1,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      lerp: 0.08, // heavier than default (0.1) for a weightier glide
+      duration: 1.2,
       smoothWheel: true,
+      wheelMultiplier: 0.9,
     })
-    // Expose for the command console so `goto` can drive scroll.
+    // Expose for programmatic scrolling if needed.
     ;(window as unknown as { __lenis?: Lenis }).__lenis = lenis
 
-    let raf = 0
-    const loop = (time: number) => {
-      lenis.raf(time)
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop)
+    // Drive Lenis from GSAP's ticker and keep ScrollTrigger in sync so
+    // scroll-reveals fire against the smoothed scroll position.
+    lenis.on("scroll", ScrollTrigger.update)
+    const raf = (time: number) => lenis.raf(time * 1000)
+    gsap.ticker.add(raf)
+    gsap.ticker.lagSmoothing(0)
 
     // Keep anchor-link navigation working with Lenis.
     const onClick = (e: MouseEvent) => {
@@ -33,18 +42,18 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       const el = id ? document.getElementById(id) : null
       if (el) {
         e.preventDefault()
-        lenis.scrollTo(el, { offset: -80 })
+        lenis.scrollTo(el, { offset: 0 })
       }
     }
     document.addEventListener("click", onClick)
 
     return () => {
-      cancelAnimationFrame(raf)
+      gsap.ticker.remove(raf)
       document.removeEventListener("click", onClick)
       delete (window as unknown as { __lenis?: Lenis }).__lenis
       lenis.destroy()
     }
-  }, [])
+  }, [reduced])
 
   return <>{children}</>
 }
