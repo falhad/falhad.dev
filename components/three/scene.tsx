@@ -446,7 +446,7 @@ const PHONE_SCREEN: [number, number] = [0.675, 1.455] // matches the model's dis
 const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
 const FLOWER_POS: [number, number, number] = [-3.35, 0, -0.9]
 const MINIONS_POS: [number, number, number] = [-2.05, 0, -1.75]
-const MINIONS_ROT: [number, number, number] = [0, 0.55, 0]
+const MINIONS_ROT: [number, number, number] = [0, 0, 0]
 const MINIONS_SCALE = 0.48
 const RUBIK_POS: [number, number, number] = [1.15, 0, 2.0]
 const RUBIK_ROT: [number, number, number] = [0, 0.4, 0]
@@ -483,7 +483,6 @@ const PLANT_LINES = [
   "Steve has survived more deploys than most startups.",
   "Petting a cactus? Bold move. Respect.",
 ]
-const PLANT_GROW_LINE = "🌱 → 🌳 STEVE GREW! You unlocked premium horticulture."
 const MAC_LINES = [
   "*knock knock* …I open when you scroll ↓",
   "Locked for now — scroll down and watch me open ↓",
@@ -553,7 +552,6 @@ function Drone() {
   const flying = useRef(false)
   const landTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pos = useMemo(() => new THREE.Vector3(), [])
-  const ahead = useMemo(() => new THREE.Vector3(), [])
 
   const takeOff = () => {
     if (landTimer.current) {
@@ -595,10 +593,10 @@ function Drone() {
     }
     curve.getPointAt(p.current, pos)
     g.position.copy(pos)
-    curve.getPointAt((p.current + 0.02) % 1, ahead)
-    const dx = ahead.x - pos.x
-    const dz = ahead.z - pos.z
-    if (dx * dx + dz * dz > 1e-6) g.rotation.y = Math.atan2(dx, dz) + Math.PI
+    // Always face the viewer (camera) — like it's watching you.
+    const dcx = _s.camera.position.x - pos.x
+    const dcz = _s.camera.position.z - pos.z
+    g.rotation.y = Math.atan2(dcx, dcz) + Math.PI
   })
   return (
     <group
@@ -675,25 +673,13 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   // Desk object state (kept in refs so clicks don't re-render the scene).
   const steamSprites = useRef<THREE.Sprite[]>([])
   const sips = useRef(8)
-  const plantClicks = useRef(0)
-  const plantGrow = useRef(1)
-  const plantGrowTarget = useRef(1)
-  const flowerBase = useRef(0)
 
   const onMug = () => {
     sips.current -= 1
     quip(sips.current <= 0 ? MUG_EMPTY : pickLine(MUG_LINES))
     if (sips.current < 0) sips.current = 0
   }
-  const onPlant = () => {
-    plantClicks.current += 1
-    if (plantClicks.current === 5) {
-      plantGrowTarget.current = 1.6
-      quip(PLANT_GROW_LINE)
-    } else {
-      quip(pickLine(PLANT_LINES))
-    }
-  }
+  const onPlant = () => quip(pickLine(PLANT_LINES))
   const onPhone = () => phoneScreen.tap()
   const onMac = () => {
     quip(pickLine(MAC_LINES))
@@ -740,11 +726,6 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       const fadeOut = smooth(invlerp(p, 0.82, 0.95))
       nameMat.current.opacity = fadeIn * (1 - fadeOut)
     }
-
-    // Steve the plant slowly grows to his new size after the 5th poke.
-    if (!flowerBase.current) flowerBase.current = flower.scale.x
-    plantGrow.current += (plantGrowTarget.current - plantGrow.current) * (1 - Math.pow(0.01, dt))
-    flower.scale.setScalar(flowerBase.current * plantGrow.current)
 
     // Coffee steam — continuous wispy vapor rising, curling and dissipating.
     const et = state.clock.elapsedTime
