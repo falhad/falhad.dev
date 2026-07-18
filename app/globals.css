@@ -63,6 +63,11 @@
   to { width: 100%; }
 }
 
+/* Slow-drifting aurora wallpaper blobs */
+@keyframes float-a { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(7vw, 6vh) scale(1.18); } }
+@keyframes float-b { 0%, 100% { transform: translate(0, 0) scale(1.1); } 50% { transform: translate(-9vw, -5vh) scale(1); } }
+@keyframes float-c { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(6vw, -7vh) scale(1.22); } }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }

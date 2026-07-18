@@ -35,12 +35,18 @@ export default function DesktopWindow({
 }: WinProps) {
   const drag = useRef<{ dx: number; dy: number } | null>(null)
   const [open, setOpen] = useState(false)
+  const [closing, setClosing] = useState(false)
 
   // Genie-ish open: grow up from the dock (bottom), settle with a spring.
   useEffect(() => {
     const r = requestAnimationFrame(() => setOpen(true))
     return () => cancelAnimationFrame(r)
   }, [])
+
+  const handleClose = () => {
+    setClosing(true)
+    setTimeout(() => onClose(id), 240)
+  }
 
   const onBarDown = (e: React.PointerEvent) => {
     onFocus(id)
@@ -69,8 +75,12 @@ export default function DesktopWindow({
         width,
         zIndex: z,
         transformOrigin: "center bottom",
-        transform: open ? "translateY(0) scale(1)" : "translateY(34vh) scale(0.5)",
-        opacity: open ? 1 : 0,
+        transform: closing
+          ? "translateY(30vh) scale(0.45)"
+          : open
+            ? "translateY(0) scale(1)"
+            : "translateY(34vh) scale(0.5)",
+        opacity: closing ? 0 : open ? 1 : 0,
         transition: "transform 380ms cubic-bezier(.16,.9,.28,1.1), opacity 260ms ease-out",
       }}
       onPointerDown={() => onFocus(id)}
@@ -91,7 +101,7 @@ export default function DesktopWindow({
         <div className="group flex items-center gap-2">
           <button
             aria-label="Close"
-            onClick={(e) => { e.stopPropagation(); onClose(id) }}
+            onClick={(e) => { e.stopPropagation(); handleClose() }}
             className="flex h-3 w-3 items-center justify-center rounded-full bg-[#ff5f57] text-[8px] text-black/50"
           >
             <span className="opacity-0 group-hover:opacity-100">✕</span>

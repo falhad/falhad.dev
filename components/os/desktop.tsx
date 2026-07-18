@@ -21,50 +21,80 @@ function Clock() {
   return <span className="tabular-nums">{now}</span>
 }
 
-/* Magnifying Dock (macOS-style) */
-function DockIcon({ a, mx, active, onClick }: { a: AppDef; mx: number | null; active: boolean; onClick: () => void }) {
-  const ref = useRef<HTMLButtonElement>(null)
-  let scale = 1
-  if (mx != null && ref.current) {
-    const r = ref.current.getBoundingClientRect()
-    const d = Math.abs(mx - (r.left + r.width / 2))
-    scale = 1 + 0.7 * Math.max(0, 1 - d / 120)
-  }
+/* Big glass clock widget on the desktop */
+function ClockWidget() {
+  const [t, setT] = useState({ time: "", date: "" })
+  useEffect(() => {
+    const tick = () =>
+      setT({
+        time: new Date().toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+        date: new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }),
+      })
+    tick()
+    const i = setInterval(tick, 10000)
+    return () => clearInterval(i)
+  }, [])
   return (
-    <button
-      ref={ref}
-      onClick={onClick}
-      data-cursor={a.title.split(" — ")[0].toLowerCase()}
-      style={{ transform: `translateY(${-(scale - 1) * 26}px) scale(${scale})`, transformOrigin: "bottom", transition: "transform 120ms ease-out" }}
-      className="group relative flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04] text-2xl hover:bg-white/10"
-    >
-      <span>{a.icon}</span>
-      <span className="pointer-events-none absolute -top-10 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[0.65rem] font-medium text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100">
-        {a.title.split(" — ")[0]}
-      </span>
-      {active ? <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-white/70" /> : null}
-    </button>
+    <div className="absolute right-6 top-16 hidden rounded-3xl border border-white/[0.12] bg-white/[0.06] px-6 py-5 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_20px_60px_-30px_rgba(0,0,0,0.7)] backdrop-blur-2xl md:block">
+      <div className="font-display text-5xl font-semibold tabular-nums text-white">{t.time}</div>
+      <div className="mt-1 text-sm text-white/60">{t.date}</div>
+      <div className="text-xs text-white/40">Muscat, Oman</div>
+    </div>
   )
 }
 
-/* Login flourish shown as the screen turns on */
+/* Aurora wallpaper — slow-drifting colored blobs behind the frosted glass */
+function Wallpaper() {
+  return (
+    <div className="absolute inset-0 overflow-hidden" style={{ background: "linear-gradient(160deg,#0e0b09,#15101c 55%,#0a0d12)" }}>
+      <div className="absolute -left-[8%] top-[2%] h-[58vh] w-[58vh] rounded-full opacity-[0.55] blur-[90px]" style={{ background: "radial-gradient(circle,#c2703a,transparent 70%)", animation: "float-a 26s ease-in-out infinite" }} />
+      <div className="absolute right-[-4%] top-[16%] h-[62vh] w-[62vh] rounded-full opacity-[0.42] blur-[100px]" style={{ background: "radial-gradient(circle,#6d3f9c,transparent 70%)", animation: "float-b 32s ease-in-out infinite" }} />
+      <div className="absolute left-[28%] -bottom-[12%] h-[58vh] w-[58vh] rounded-full opacity-[0.38] blur-[100px]" style={{ background: "radial-gradient(circle,#2f7f8a,transparent 70%)", animation: "float-c 30s ease-in-out infinite" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(120% 90% at 50% 40%, transparent 42%, rgba(0,0,0,0.6))" }} />
+    </div>
+  )
+}
+
+/* Menubar status icons */
+function StatusIcons() {
+  return (
+    <div className="hidden items-center gap-3 text-foreground/75 sm:flex">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <rect x="3" y="5" width="18" height="6" rx="3" />
+        <rect x="3" y="13" width="18" height="6" rx="3" />
+        <circle cx="16" cy="8" r="1.6" fill="currentColor" />
+        <circle cx="8" cy="16" r="1.6" fill="currentColor" />
+      </svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <circle cx="12" cy="18.5" r="1.7" />
+        <path d="M4.5 11a10.5 10.5 0 0115 0l-1.8 1.8a8 8 0 00-11.4 0z" opacity=".85" />
+        <path d="M7.8 14.6a5.6 5.6 0 018.4 0L12 18.4z" />
+      </svg>
+      <svg width="26" height="13" viewBox="0 0 26 13" fill="none" stroke="currentColor" aria-hidden>
+        <rect x="1" y="1.5" width="20" height="10" rx="2.5" opacity=".6" />
+        <rect x="2.6" y="3" width="13" height="7" rx="1.3" fill="currentColor" stroke="none" />
+        <rect x="22.6" y="4.5" width="2" height="4" rx="1" fill="currentColor" stroke="none" opacity=".6" />
+      </svg>
+    </div>
+  )
+}
+
+/* Lock-screen login shown as the screen turns on */
 function BootScreen({ running }: { running: boolean }) {
   return (
-    <div className="absolute inset-0 z-[350] flex flex-col items-center justify-center bg-black">
+    <div className="absolute inset-0 z-[350] flex flex-col items-center justify-center bg-black/45 backdrop-blur-2xl">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/images/portrait.jpg"
         alt="Farhad Navayazdan"
-        className="h-24 w-24 rounded-full object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.15)]"
+        loading="eager"
+        className="h-24 w-24 rounded-full object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.25),0_20px_50px_-15px_rgba(0,0,0,0.8)]"
       />
       <p className="mt-4 text-lg font-medium text-white">Farhad Navayazdan</p>
       <div className="mt-6 h-1 w-40 overflow-hidden rounded-full bg-white/15">
-        <div
-          className="h-full rounded-full bg-white/80"
-          style={running ? { animation: "boot-bar 1.5s ease-out forwards" } : { width: "0%" }}
-        />
+        <div className="h-full rounded-full bg-white/80" style={running ? { animation: "boot-bar 1.5s ease-out forwards" } : { width: "0%" }} />
       </div>
-      <p className="mt-3 text-xs text-white/40">Logging in…</p>
+      <p className="mt-3 text-xs text-white/50">Logging in…</p>
     </div>
   )
 }
@@ -79,6 +109,12 @@ export default function Desktop() {
   const zTop = useRef(10)
   const bootRef = useRef<"idle" | "running" | "done">("idle")
 
+  // Warm the login portrait into cache so it's decoded before the login shows.
+  useEffect(() => {
+    const img = new Image()
+    img.src = "/images/portrait.jpg"
+  }, [])
+
   const open = (id: string) => {
     setHint(false)
     setWins((ws) => {
@@ -92,15 +128,20 @@ export default function Desktop() {
   const focus = (id: string) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, z: ++zTop.current } : w)))
   const move = (id: string, x: number, y: number) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, x, y } : w)))
 
-  // Log out — scroll back out of the screen to the hero desk.
+  // Log out — reset the session and scroll back out to the hero desk. Scrolling
+  // back down replays the login.
   const logout = () => {
+    setWins([])
     setMobileApp(null)
+    setHint(true)
+    bootRef.current = "idle"
+    setBoot("idle")
     const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
     if (l) l.scrollTo(0, { duration: 1.6 })
     else window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // Reveal on scroll; when it lands, play the boot flourish once, then open About.
+  // Reveal on scroll; when it lands, play the login flourish, then open About.
   useEffect(() => {
     const onScroll = () => {
       const hero = document.getElementById("hero")
@@ -114,10 +155,11 @@ export default function Desktop() {
         bootRef.current = "running"
         setBoot("running")
         setTimeout(() => {
+          if (bootRef.current !== "running") return
           bootRef.current = "done"
           setBoot("done")
           open("about")
-        }, 1900)
+        }, 2100)
       }
     }
     onScroll()
@@ -136,30 +178,38 @@ export default function Desktop() {
       id="desktop"
       aria-label="Desktop"
       className="fixed inset-0 z-[60] overflow-hidden"
-      style={{
-        background: "radial-gradient(120% 90% at 60% 0%, #241d16, #100b07 70%)",
-        opacity: reveal,
-        pointerEvents: reveal > 0.9 ? "auto" : "none",
-      }}
+      style={{ opacity: reveal, pointerEvents: reveal > 0.9 ? "auto" : "none" }}
     >
+      <Wallpaper />
+
       {/* ===== Menubar ===== */}
       <div className="absolute inset-x-0 top-0 z-[200] flex items-center justify-between border-b border-white/10 bg-white/[0.06] px-4 py-1.5 text-xs text-foreground/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl">
         <div className="flex items-center gap-4">
           <span></span>
           <span className="font-semibold">{topApp ? topApp.title.split(" — ")[1] ?? topApp.title : "Finder"}</span>
-          <span className="hidden text-muted-foreground sm:inline">{topApp ? topApp.title.split(" — ")[0] : "Farhad Navayazdan"}</span>
+          <span className="hidden gap-4 text-muted-foreground md:flex">
+            <span>File</span>
+            <span>Edit</span>
+            <span>View</span>
+            <span>Window</span>
+            <span>Help</span>
+          </span>
         </div>
         <div className="flex items-center gap-4">
+          <StatusIcons />
           <button
             onClick={logout}
             data-cursor="log out"
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-foreground/70 transition-colors hover:bg-white/10 hover:text-white"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-foreground/75 transition-colors hover:bg-white/10 hover:text-white"
           >
             <span aria-hidden>⏻</span> Log out
           </button>
           <Clock />
         </div>
       </div>
+
+      {/* Desktop clock widget */}
+      <ClockWidget />
 
       {/* ===== Desktop (md+) : window manager ===== */}
       <div className="absolute inset-0 hidden md:block">
@@ -189,7 +239,7 @@ export default function Desktop() {
           })}
 
         {hint && boot === "done" ? (
-          <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 animate-pulse text-sm text-muted-foreground">
+          <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 animate-pulse text-sm text-white/60">
             Click an app in the Dock to explore ↓
           </div>
         ) : null}
@@ -201,17 +251,17 @@ export default function Desktop() {
         <div className="grid grid-cols-3 gap-x-4 gap-y-6">
           {APPS.map((a) => (
             <button key={a.id} onClick={() => setMobileApp(a.id)} className="flex flex-col items-center gap-2">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-2xl">
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] text-2xl backdrop-blur-xl">
                 {a.icon}
               </span>
-              <span className="text-center text-[0.7rem] leading-tight text-muted-foreground">{a.title.split(" — ")[0]}</span>
+              <span className="text-center text-[0.7rem] leading-tight text-white/70">{a.title.split(" — ")[0]}</span>
             </button>
           ))}
         </div>
       </div>
 
       {mobileDef ? (
-        <div className="fixed inset-0 z-[300] flex flex-col bg-[#141110] md:hidden">
+        <div className="fixed inset-0 z-[300] flex flex-col bg-[#141110]/95 backdrop-blur-2xl md:hidden">
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
             <button onClick={() => setMobileApp(null)} className="text-sm text-[var(--terracotta)]">‹ Home</button>
             <span className="text-sm font-medium text-foreground/80">{mobileDef.title.split(" — ")[0]}</span>
@@ -242,8 +292,34 @@ export default function Desktop() {
         </div>
       </div>
 
-      {/* ===== Boot flourish ===== */}
+      {/* ===== Login flourish ===== */}
       {boot !== "done" ? <BootScreen running={boot === "running"} /> : null}
     </section>
+  )
+}
+
+/* Magnifying Dock icon (macOS-style) */
+function DockIcon({ a, mx, active, onClick }: { a: AppDef; mx: number | null; active: boolean; onClick: () => void }) {
+  const ref = useRef<HTMLButtonElement>(null)
+  let scale = 1
+  if (mx != null && ref.current) {
+    const r = ref.current.getBoundingClientRect()
+    const d = Math.abs(mx - (r.left + r.width / 2))
+    scale = 1 + 0.7 * Math.max(0, 1 - d / 120)
+  }
+  return (
+    <button
+      ref={ref}
+      onClick={onClick}
+      data-cursor={a.title.split(" — ")[0].toLowerCase()}
+      style={{ transform: `translateY(${-(scale - 1) * 26}px) scale(${scale})`, transformOrigin: "bottom", transition: "transform 120ms ease-out" }}
+      className="group relative flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.05] text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/10"
+    >
+      <span>{a.icon}</span>
+      <span className="pointer-events-none absolute -top-10 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[0.65rem] font-medium text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100">
+        {a.title.split(" — ")[0]}
+      </span>
+      {active ? <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-white/70" /> : null}
+    </button>
   )
 }
