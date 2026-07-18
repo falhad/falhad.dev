@@ -707,7 +707,7 @@ function Drone() {
   )
 }
 
-function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
+function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () => void }) {
   const laptop = useRef<THREE.Group>(null)
   const nameMat = useRef<THREE.MeshBasicMaterial>(null)
   const { pointer } = useThree()
@@ -766,6 +766,8 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
 
   // Desk object state (kept in refs so clicks don't re-render the scene).
   const steamSprites = useRef<THREE.Sprite[]>([])
+  const lampGlowMat = useRef<THREE.MeshBasicMaterial>(null)
+  const lampGlow = useRef(0)
   const sips = useRef(8)
 
   const onMug = () => {
@@ -840,6 +842,13 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       s.scale.set(sc, sc * 1.4, sc)
       ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.05
     })
+
+    // Desk-level "click me" glow under the lamp while it's off.
+    lampGlow.current += ((lampOn ? 0 : 1) - lampGlow.current) * (1 - Math.pow(0.01, dt))
+    if (lampGlowMat.current) {
+      const pulse = 0.6 + 0.4 * Math.sin(et * 2.2)
+      lampGlowMat.current.opacity = lampGlow.current * pulse * 0.5
+    }
   })
 
   return (
@@ -930,6 +939,19 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
         onPointerOut={() => (document.body.style.cursor = "")}
       >
         <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
+        {/* Desk-level glow hint on the lamp base while the light is off. */}
+        <mesh position={[LAMP_POS[0], 0.03, LAMP_POS[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[1.1, 48]} />
+          <meshBasicMaterial
+            ref={lampGlowMat}
+            map={steamTex}
+            color="#ffce8a"
+            transparent
+            opacity={0}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
       </group>
     </group>
   )
@@ -1023,7 +1045,7 @@ export default function Scene({ lampOn = true, onToggleLamp = () => {} }: { lamp
         {/* Lamp-driven room lighting (dark until the switch is clicked). */}
         <Lights lampOn={lampOn} />
         <Suspense fallback={null}>
-          <Sequence onToggleLamp={onToggleLamp} />
+          <Sequence lampOn={lampOn} onToggleLamp={onToggleLamp} />
           {/* The environment HDR is the room's ambient fill — kill it entirely
               when the lamp is off so the room actually goes dark. */}
           {lampOn ? <Environment preset="apartment" environmentIntensity={0.7} /> : null}
