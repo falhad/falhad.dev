@@ -462,7 +462,7 @@ const DRONE_ROUTE: [number, number, number][] = [
   [-0.5, 2.25, -2.55], // cross the back, high behind the lid
   [-2.5, 1.45, -1.75], // descend over the minions
   [-3.35, 1.35, -0.9], // over the plant
-  [-3.0, 1.35, 1.35], // over the notebook (front-left)
+  [-2.95, 1.15, 1.75], // over the notebook, close to the user
 ]
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
@@ -554,54 +554,43 @@ function Drone() {
   const p = useRef(0)
   const dir = useRef(1)
   const flying = useRef(false)
-  const landTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wantLand = useRef(false)
   const pos = useMemo(() => new THREE.Vector3(), [])
 
   const takeOff = () => {
-    if (landTimer.current) {
-      clearTimeout(landTimer.current)
-      landTimer.current = null
-    }
     document.body.style.cursor = "pointer"
+    wantLand.current = false
     if (!flying.current) {
       flying.current = true
       dir.current = 1
       actions["hover"]?.reset().fadeIn(0.3).play()
     }
   }
-  const scheduleLand = () => {
+  // Don't cut the trip short — request landing; it finishes the full out-and-back
+  // (to the notebook and home) before touching down.
+  const requestLand = () => {
     document.body.style.cursor = ""
-    if (landTimer.current) clearTimeout(landTimer.current)
-    landTimer.current = setTimeout(() => {
-      flying.current = false // finishes the current lap in useFrame, then lands
-      landTimer.current = null
-    }, 3000)
+    wantLand.current = true
   }
-  useEffect(() => () => {
-    if (landTimer.current) clearTimeout(landTimer.current)
-  }, [])
 
   useFrame((_s, dtRaw) => {
     const g = group.current
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
-    const speed = 1 / 5 // one-way ≈ 5s
-    const LO = 0.06 // stays airborne (doesn't touch the desk) while active
+    const speed = 1 / 6 // one-way ≈ 6s
     if (flying.current) {
       p.current += dir.current * speed * dt
       if (p.current >= 1) {
         p.current = 1
-        dir.current = -1
-      } else if (p.current <= LO) {
-        p.current = LO
-        dir.current = 1
-      }
-    } else if (p.current > 0.0008) {
-      // returning home along the same path, then land
-      p.current -= speed * dt
-      if (p.current <= 0) {
+        dir.current = -1 // reached the notebook — head back
+      } else if (p.current <= 0) {
         p.current = 0
-        actions["hover"]?.fadeOut(0.8)
+        if (wantLand.current) {
+          flying.current = false // completed the lap; land
+          actions["hover"]?.fadeOut(0.8)
+        } else {
+          dir.current = 1 // another lap while still hovered
+        }
       }
     }
     curve.getPointAt(p.current, pos)
@@ -619,7 +608,7 @@ function Drone() {
         e.stopPropagation()
         takeOff()
       }}
-      onPointerOut={scheduleLand}
+      onPointerOut={requestLand}
     >
       <primitive object={model} />
     </group>
