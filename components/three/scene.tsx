@@ -840,14 +840,14 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
       s.position.z = Math.cos(ph * 3 + i * 2.1) * 0.07 * ph
       const sc = 0.1 + ph * 0.32
       s.scale.set(sc, sc * 1.4, sc)
-      ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.05
+        ; (s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.05
     })
 
     // Desk-level "click me" glow under the lamp while it's off.
     lampGlow.current += ((lampOn ? 0 : 1) - lampGlow.current) * (1 - Math.pow(0.01, dt))
     if (lampGlowMat.current) {
       const pulse = 0.6 + 0.4 * Math.sin(et * 2.2)
-      lampGlowMat.current.opacity = lampGlow.current * pulse * 0.5
+      lampGlowMat.current.opacity = lampGlow.current * pulse * 0.05
     }
   })
 
@@ -940,8 +940,8 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
       >
         <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
         {/* Desk-level glow hint on the lamp base while the light is off. */}
-        <mesh position={[LAMP_POS[0], 0.03, LAMP_POS[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[1.1, 48]} />
+        <mesh position={[LAMP_POS[0] + 0.3, 0.15, LAMP_POS[2] - 0.6]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[0.5, 48]} />
           <meshBasicMaterial
             ref={lampGlowMat}
             map={steamTex}
@@ -966,10 +966,14 @@ function Lights({ lampOn }: { lampOn: boolean }) {
   const fill = useRef<THREE.DirectionalLight>(null)
   const moon = useRef<THREE.SpotLight>(null)
   const lvl = useRef(lampOn ? 1 : 0)
-  useFrame((_state, dtRaw) => {
+  const LAMP_RAMP = 1.0 // seconds for the light to fully turn on/off
+  useFrame((state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
-    lvl.current += ((lampOn ? 1 : 0) - lvl.current) * (1 - Math.pow(0.004, dt))
-    const l = lvl.current
+    // Linear-time ramp over ~LAMP_RAMP seconds, eased with smoothstep.
+    const target = lampOn ? 1 : 0
+    const step = dt / LAMP_RAMP
+    lvl.current = clamp(lvl.current + clamp(target - lvl.current, -step, step), 0, 1)
+    const l = smooth(lvl.current)
     // Dark: almost no global fill — only the moon cone reveals the lamp/laptop/mug.
     // Lit: warm room-wide fill on top.
     if (amb.current) amb.current.intensity = 0.02 + 0.95 * l
@@ -977,6 +981,8 @@ function Lights({ lampOn }: { lampOn: boolean }) {
     if (fill.current) fill.current.intensity = 0.72 * l
     if (spot.current) spot.current.intensity = 58 * l
     if (moon.current) moon.current.intensity = 7 * (1 - l)
+    // Fade the environment HDR with the lamp instead of popping it in.
+    state.scene.environmentIntensity = 0.03 + 0.67 * l
   })
   return (
     <>
@@ -1025,7 +1031,7 @@ useGLTF.preload(MINIONS)
 useGLTF.preload(RUBIK)
 useGLTF.preload(DRONE)
 
-export default function Scene({ lampOn = true, onToggleLamp = () => {} }: { lampOn?: boolean; onToggleLamp?: () => void }) {
+export default function Scene({ lampOn = true, onToggleLamp = () => { } }: { lampOn?: boolean; onToggleLamp?: () => void }) {
   const reduced = useReducedMotion()
   if (reduced) {
     return (
@@ -1048,7 +1054,7 @@ export default function Scene({ lampOn = true, onToggleLamp = () => {} }: { lamp
           <Sequence lampOn={lampOn} onToggleLamp={onToggleLamp} />
           {/* The environment HDR is the room's ambient fill — kill it entirely
               when the lamp is off so the room actually goes dark. */}
-          {lampOn ? <Environment preset="apartment" environmentIntensity={0.7} /> : null}
+          <Environment preset="apartment" />
         </Suspense>
         <EffectComposer>
           <Bloom intensity={0.1} luminanceThreshold={0.92} luminanceSmoothing={0.9} mipmapBlur />
