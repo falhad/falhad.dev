@@ -477,10 +477,11 @@ function Lights({ lampOn }: { lampOn: boolean }) {
     const dt = Math.min(dtRaw, 0.05)
     lvl.current += ((lampOn ? 1 : 0) - lvl.current) * (1 - Math.pow(0.004, dt))
     const l = lvl.current
-    // Dark floor stays tiny; lamp-on lifts a soft room-wide fill on top.
-    if (amb.current) amb.current.intensity = 0.02 + 0.95 * l
-    if (hemi.current) hemi.current.intensity = 1.15 * l
-    if (fill.current) fill.current.intensity = 0.7 * l
+    // Keep a faint moonlit floor so the lamp is findable in the dark (no glow);
+    // lamp-on lifts a soft room-wide fill on top.
+    if (amb.current) amb.current.intensity = 0.11 + 0.86 * l
+    if (hemi.current) hemi.current.intensity = 0.14 + 1.0 * l
+    if (fill.current) fill.current.intensity = 0.08 + 0.62 * l
     if (spot.current) spot.current.intensity = 58 * l
   })
   return (
