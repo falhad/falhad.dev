@@ -40,12 +40,21 @@ export function AboutApp() {
         <p className="mt-4 text-[1.05rem] leading-relaxed text-muted-foreground">{BIO}</p>
         <p className="mt-7 font-medium text-foreground">Highlights</p>
         <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-4">
-          {stats.map((s) => (
-            <div key={s.label}>
-              <div className="font-display text-2xl font-semibold text-foreground">{s.value}</div>
-              <div className="section-label mt-1">{s.label}</div>
-            </div>
-          ))}
+          {stats.map((s) => {
+            const isCoffee = /coffee/i.test(s.label)
+            return (
+              <button
+                key={s.label}
+                type="button"
+                onClick={isCoffee ? () => window.dispatchEvent(new Event("coffee-spill")) : undefined}
+                data-cursor={isCoffee ? "careful…" : undefined}
+                className={`text-left ${isCoffee ? "cursor-pointer transition-transform hover:-translate-y-0.5" : "cursor-default"}`}
+              >
+                <div className="font-display text-2xl font-semibold text-foreground">{s.value}</div>
+                <div className="section-label mt-1">{s.label}</div>
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>

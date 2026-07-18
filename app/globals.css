@@ -58,6 +58,11 @@
   .reveal-line > * { display: block; will-change: transform; }
 }
 
+@keyframes coffee-drip {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }

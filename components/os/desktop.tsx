@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
 import DesktopWindow from "@/components/os/desktop-window"
+import CoffeeSpill from "@/components/os/coffee-spill"
 import { APPS } from "@/components/os/apps"
 
 type Win = { id: string; x: number; y: number; z: number; min: boolean }
@@ -23,7 +24,15 @@ export default function Desktop() {
   const [mobileApp, setMobileApp] = useState<string | null>(null)
   const [hint, setHint] = useState(true)
   const [reveal, setReveal] = useState(0)
+  const [spill, setSpill] = useState(0)
   const zTop = useRef(10)
+
+  // Coffee-spill Easter egg — triggered by the menubar cup or the coffees stat.
+  useEffect(() => {
+    const onSpill = () => setSpill((s) => s + 1)
+    window.addEventListener("coffee-spill", onSpill)
+    return () => window.removeEventListener("coffee-spill", onSpill)
+  }, [])
 
   // The desktop "turns on" over the black screen as the push-in completes.
   useEffect(() => {
@@ -83,8 +92,19 @@ export default function Desktop() {
           <span className="font-semibold">{topApp ? topApp.title.split(" — ")[1] ?? topApp.title : "Finder"}</span>
           <span className="hidden text-muted-foreground sm:inline">{topApp ? topApp.title.split(" — ")[0] : "Farhad Navayazdan"}</span>
         </div>
-        <Clock />
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setSpill((s) => s + 1)}
+            data-cursor="spill?"
+            aria-label="Coffee"
+            className="text-sm transition-transform hover:scale-125"
+          >
+            ☕
+          </button>
+          <Clock />
+        </div>
       </div>
+      {spill > 0 ? <CoffeeSpill key={spill} onDone={() => setSpill(0)} /> : null}
 
       {/* ===== Desktop (md+) : window manager ===== */}
       <div className="absolute inset-0 hidden md:block">
