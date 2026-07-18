@@ -2,7 +2,6 @@
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { profile } from "@/lib/portfolio-data"
-import Magnetic from "@/components/motion/magnetic"
 import LampDialog from "@/components/hero/lamp-dialog"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
 
@@ -134,32 +133,8 @@ export default function Hero() {
             style={{ background: "linear-gradient(to top, #0c0906 12%, rgba(12,9,6,0))" }}
           />
 
-          {/* Minimal overlay — light-on-dark for the dim room. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-14 px-6 md:px-12">
-            <div className="mx-auto max-w-6xl">
-              <div className="pointer-events-auto">
-                <Magnetic>
-                  <a
-                    href="#"
-                    data-cursor="enter"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
-                      const to = document.documentElement.scrollHeight
-                      if (l) l.scrollTo(to, { duration: 2.4 })
-                      else window.scrollTo({ top: to, behavior: "smooth" })
-                    }}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#ece5d8] px-7 py-3 text-[#1a1512] transition-colors hover:bg-[var(--terracotta)] hover:text-white"
-                  >
-                    Enter workspace ↓
-                  </a>
-                </Magnetic>
-              </div>
-            </div>
-          </div>
-
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-pulse text-[0.7rem] font-medium uppercase tracking-[0.22em] text-[#9a8f7d]">
-            scroll
+            scroll ↓
           </div>
         </div>
       </div>
