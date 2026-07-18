@@ -52,7 +52,7 @@ export default function LampDialog({ text, canClose }: { text: string; canClose:
       {/* Soft glow over the lamp (top-right) while it's off — draws the eye. */}
       {!canClose ? (
         <div
-          className="lampdlg-glow pointer-events-none absolute right-[8%] top-[8%] z-40 h-52 w-52 rounded-full"
+          className="lampdlg-glow pointer-events-none absolute right-[12%] top-[18%] z-40 h-40 w-40 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(255,214,150,0.30) 0%, rgba(255,214,150,0.10) 40%, rgba(255,214,150,0) 72%)" }}
         />
       ) : null}

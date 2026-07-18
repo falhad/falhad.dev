@@ -496,6 +496,34 @@ const MAC_LINES = [
   "Locked for now — scroll down and watch me open ↓",
   "Patience. I unfold as you scroll ↓",
 ]
+const MINION_LINES = [
+  "🍌 BANANAAA! …sorry, force of habit.",
+  "We are three. We are chaos. We are QA.",
+  "Bello! Tulaliloo ti amo! (that means 'ship it').",
+  "We fixed one bug and made three more. Teamwork!",
+  "Poopaye! …wait, you're still scrolling?",
+]
+const NOTEBOOK_LINES = [
+  "📓 Ideas graveyard. RIP 47 side projects.",
+  "Page 1: 'This year I journal daily.' Page 2: blank.",
+  "Handwriting even I can't read — ancient dev runes.",
+  "Holds one genius idea and a grocery list.",
+  "The real backlog lives here, not in Jira.",
+]
+const RUBIK_LINES = [
+  "🧊 Solved it once. In 2009. Never again.",
+  "6 sides, 43 quintillion combos, 0 patience.",
+  "Peeling the stickers is also a valid algorithm.",
+  "It's not stuck — it's 'in progress'.",
+  "Time complexity of solving this: O(giving up).",
+]
+const PHONE_QUIPS = [
+  "📱 Mom: 'Are you eating enough?' …seen 3h ago.",
+  "17 unread Slack threads. Bold of them to assume.",
+  "Screen time up 40% this week. It's 'research'.",
+  "Do Not Disturb: on since 2019.",
+  "One missed call from Reality. Declined.",
+]
 const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)]
 const quip = (text: string) => window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
 
@@ -544,20 +572,23 @@ function Interactive({
   )
 }
 
-// Decorative hover reaction: a subtle lift + gentle wobble while hovered.
+// Subtle pointer-tilt on hover + a small pop and quip on click.
 function HoverMove({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
+  onClick,
   children,
 }: {
   position?: [number, number, number]
   rotation?: [number, number, number]
   scale?: number
+  onClick?: () => void
   children: React.ReactNode
 }) {
   const ref = useRef<THREE.Group>(null)
   const hovered = useRef(false)
+  const punch = useRef(0)
   const { pointer } = useThree()
   const baseRx = rotation[0] ?? 0
   const baseRy = rotation[1] ?? 0
@@ -571,6 +602,8 @@ function HoverMove({
     const tx = baseRx + -pointer.y * 0.1 * k
     g.rotation.y += (ty - g.rotation.y) * (1 - Math.pow(0.004, dt))
     g.rotation.x += (tx - g.rotation.x) * (1 - Math.pow(0.004, dt))
+    punch.current += (0 - punch.current) * (1 - Math.pow(0.02, dt))
+    g.scale.setScalar(scale * (1 + 0.08 * punch.current))
   })
   return (
     <group
@@ -586,6 +619,11 @@ function HoverMove({
       onPointerOut={() => {
         hovered.current = false
         document.body.style.cursor = ""
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        punch.current = 1
+        onClick?.()
       }}
     >
       {children}
@@ -736,7 +774,13 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
     if (sips.current < 0) sips.current = 0
   }
   const onPlant = () => quip(pickLine(PLANT_LINES))
-  const onPhone = () => phoneScreen.tap()
+  const onMinions = () => quip(pickLine(MINION_LINES))
+  const onNotebook = () => quip(pickLine(NOTEBOOK_LINES))
+  const onRubik = () => quip(pickLine(RUBIK_LINES))
+  const onPhone = () => {
+    phoneScreen.tap()
+    quip(pickLine(PHONE_QUIPS))
+  }
   const onMac = () => {
     quip(pickLine(MAC_LINES))
     const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
@@ -835,7 +879,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
         ))}
       </group>
 
-      <HoverMove position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT}>
+      <HoverMove position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT} onClick={onNotebook}>
         <primitive object={notebook} />
         {/* Small sticky note resting on top of the notebook cover. Uses a lit
             material so it goes dark with the room instead of glowing. */}
@@ -847,10 +891,10 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       <Interactive position={FLOWER_POS} onClick={onPlant}>
         <primitive object={flower} />
       </Interactive>
-      <HoverMove position={MINIONS_POS} rotation={MINIONS_ROT} scale={MINIONS_SCALE}>
+      <HoverMove position={MINIONS_POS} rotation={MINIONS_ROT} scale={MINIONS_SCALE} onClick={onMinions}>
         <primitive object={minions} />
       </HoverMove>
-      <HoverMove position={RUBIK_POS} rotation={RUBIK_ROT}>
+      <HoverMove position={RUBIK_POS} rotation={RUBIK_ROT} onClick={onRubik}>
         <primitive object={rubik} />
       </HoverMove>
       <Drone />
