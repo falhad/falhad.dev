@@ -58,9 +58,9 @@
   .reveal-line > * { display: block; will-change: transform; }
 }
 
-@keyframes coffee-drip {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
+@keyframes boot-bar {
+  from { width: 0%; }
+  to { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

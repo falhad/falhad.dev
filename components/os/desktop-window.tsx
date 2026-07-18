@@ -1,5 +1,5 @@
 "use client"
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export type WinProps = {
@@ -34,6 +34,13 @@ export default function DesktopWindow({
   children,
 }: WinProps) {
   const drag = useRef<{ dx: number; dy: number } | null>(null)
+  const [open, setOpen] = useState(false)
+
+  // Genie-ish open: grow up from the dock (bottom), settle with a spring.
+  useEffect(() => {
+    const r = requestAnimationFrame(() => setOpen(true))
+    return () => cancelAnimationFrame(r)
+  }, [])
 
   const onBarDown = (e: React.PointerEvent) => {
     onFocus(id)
@@ -56,7 +63,16 @@ export default function DesktopWindow({
           ? "border-white/15 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95)]"
           : "border-white/8 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)]",
       )}
-      style={{ left: x, top: y, width, zIndex: z }}
+      style={{
+        left: x,
+        top: y,
+        width,
+        zIndex: z,
+        transformOrigin: "center bottom",
+        transform: open ? "translateY(0) scale(1)" : "translateY(34vh) scale(0.5)",
+        opacity: open ? 1 : 0,
+        transition: "transform 380ms cubic-bezier(.16,.9,.28,1.1), opacity 260ms ease-out",
+      }}
       onPointerDown={() => onFocus(id)}
     >
       {/* Title bar (drag handle) */}
