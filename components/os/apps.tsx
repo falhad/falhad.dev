@@ -9,6 +9,133 @@ import {
   certifications,
   awards,
 } from "@/lib/portfolio-data"
+import {
+  siKotlin,
+  siPython,
+  siRust,
+  siDart,
+  siTypescript,
+  siJavascript,
+  siPhp,
+  siOpenjdk,
+  siSpringboot,
+  siReact,
+  siNextdotjs,
+  siJetpackcompose,
+  siFlutter,
+  siDjango,
+  siFastapi,
+  siLaravel,
+  siExpress,
+  siGit,
+  siDocker,
+  siPostgresql,
+  siMongodb,
+  siRedis,
+  siNeo4j,
+  siCisco,
+  siSocketdotio,
+  siWebrtc,
+  siLangchain,
+  siJira,
+} from "simple-icons"
+import {
+  Brain,
+  Search,
+  Bot,
+  Database,
+  Sparkles,
+  Boxes,
+  Workflow,
+  FlaskConical,
+  Plane,
+  Infinity as InfinityIcon,
+  Network,
+  Cable,
+  Zap,
+  Video,
+} from "lucide-react"
+
+// Each skill maps to a brand/theme color + a glyph. The tile is painted with
+// the color and the glyph is auto-contrasted (dark or white) so it stays legible.
+type LucideComp = React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+type IconDef = { color: string; render: (glyph: string) => React.ReactNode }
+
+const si = (data: { path: string; hex: string }): IconDef => ({
+  color: `#${data.hex}`,
+  render: (g) => (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" style={{ fill: g }} aria-hidden>
+      <path d={data.path} />
+    </svg>
+  ),
+})
+const lu = (Comp: LucideComp, color: string): IconDef => ({
+  color,
+  render: (g) => <Comp className="h-6 w-6" style={{ color: g }} />,
+})
+
+// Pick a legible glyph color for a given tile color (dark glyph on light tiles).
+function glyphOn(hex: string) {
+  const h = hex.replace("#", "")
+  const r = parseInt(h.slice(0, 2), 16)
+  const gc = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  const L = (0.299 * r + 0.587 * gc + 0.114 * b) / 255
+  return L > 0.62 ? "#141210" : "#ffffff"
+}
+
+const SKILL_META: Record<string, IconDef> = {
+  // AI & LLM
+  LLMs: lu(Brain, "#A855F7"),
+  RAG: lu(Search, "#10B981"),
+  "AI Agents": lu(Bot, "#6366F1"),
+  "Vector DBs": lu(Database, "#0EA5E9"),
+  "Prompt Engineering": lu(Sparkles, "#F59E0B"),
+  Embeddings: lu(Boxes, "#14B8A6"),
+  LangChain: si(siLangchain),
+  // General
+  "System Design": lu(Workflow, "#38BDF8"),
+  "Test Driven Development": lu(FlaskConical, "#22C55E"),
+  "Micro-Services": lu(Boxes, "#F97316"),
+  "Fleet & Drone Systems": lu(Plane, "#64748B"),
+  Jira: si(siJira),
+  // Languages
+  Java: si(siOpenjdk),
+  Kotlin: si(siKotlin),
+  Python: si(siPython),
+  Rust: si(siRust),
+  Dart: si(siDart),
+  TypeScript: si(siTypescript),
+  JavaScript: si(siJavascript),
+  PHP: si(siPhp),
+  // Frameworks
+  "Spring Boot": si(siSpringboot),
+  "React.js": si(siReact),
+  "Next.js": si(siNextdotjs),
+  "Jetpack Compose": si(siJetpackcompose),
+  KMP: si(siKotlin),
+  Flutter: si(siFlutter),
+  Django: si(siDjango),
+  FastAPI: si(siFastapi),
+  Laravel: si(siLaravel),
+  "Express.js": si(siExpress),
+  // Tools & DBs
+  Git: si(siGit),
+  Docker: si(siDocker),
+  "CI/CD": lu(InfinityIcon, "#3B82F6"),
+  PostgreSQL: si(siPostgresql),
+  MongoDB: si(siMongodb),
+  Redis: si(siRedis),
+  Neo4j: si(siNeo4j),
+  // Networking
+  "CCNP-level expertise": si(siCisco),
+  "Network Administration": lu(Network, "#0EA5E9"),
+  "Socket Programming": lu(Cable, "#A78BFA"),
+  Netty: lu(Zap, "#EAB308"),
+  "Socket.io": si(siSocketdotio),
+  WebRTC: si(siWebrtc),
+  "Video Optimization": lu(Video, "#EF4444"),
+}
 
 const BIO =
   "14+ years shipping high-impact systems — real-time rig monitoring for oil & gas, blockchain and crypto platforms, and LLM/RAG AI, leading teams from concept to deployment."
@@ -94,29 +221,29 @@ export function WorkApp() {
 }
 
 /* ---------------- Skills (Launchpad) ---------------- */
-const TINTS = [
-  "from-[#c2703a] to-[#8a3f22]",
-  "from-[#3a6ea5] to-[#22406a]",
-  "from-[#5a8f3a] to-[#31502040]",
-  "from-[#8a5ac2] to-[#4a2f6a]",
-  "from-[#c2a23a] to-[#6a5320]",
-  "from-[#3aa0a5] to-[#20505a]",
-]
 export function SkillsApp() {
   return (
     <div className="grid gap-y-9 p-8">
-      {skills.map((group, gi) => (
+      {skills.map((group) => (
         <div key={group.category}>
           <h3 className="section-label mb-5 text-center text-foreground">{group.category}</h3>
           <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-5 md:grid-cols-6">
-            {group.items.map((item) => (
-              <div key={item} className="flex flex-col items-center gap-2">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${TINTS[gi % TINTS.length]} shadow-lg`}>
-                  <span className="font-semibold text-white/90">{item.slice(0, 2)}</span>
+            {group.items.map((item) => {
+              const def = SKILL_META[item]
+              const color = def?.color ?? "#3a352e"
+              const glyph = glyphOn(color)
+              return (
+                <div key={item} className="flex flex-col items-center gap-2">
+                  <div
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg ring-1 ring-white/10"
+                    style={{ background: `linear-gradient(150deg, ${color}, ${color}cc)` }}
+                  >
+                    {def ? def.render(glyph) : <span className="font-semibold" style={{ color: glyph }}>{item.slice(0, 2)}</span>}
+                  </div>
+                  <span className="text-center text-[0.7rem] leading-tight text-muted-foreground">{item}</span>
                 </div>
-                <span className="text-center text-[0.7rem] leading-tight text-muted-foreground">{item}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       ))}
