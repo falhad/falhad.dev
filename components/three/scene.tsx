@@ -453,15 +453,15 @@ const RUBIK_ROT: [number, number, number] = [0, 0.4, 0]
 const DRONE_SCALE = 0.6
 // Flight route (closed loop): home → over the minions → over the plant → sweep
 // back → home. Home (index 0) is low on the desk so it lands there.
-// Kept entirely in the back strip (z ≤ ~-1.1) so it stays behind the raised
-// laptop lid and never collides with the open monitor.
+// Out-and-back inspection path: from home it pushes to the BACK of the desk,
+// arcs a half-circle behind everything (well behind the raised lid), then
+// returns along the same path. Open spline, traversed ping-pong.
 const DRONE_ROUTE: [number, number, number][] = [
   [2.15, 0.12, -1.6], // home (parked on desk)
-  [1.3, 1.35, -1.95], // rise, back-right
-  [-0.5, 1.5, -2.05], // cross the back (behind the lid)
-  [-2.5, 1.4, -1.8], // over the minions
-  [-3.2, 1.25, -1.15], // over the plant
-  [-0.9, 1.45, -1.95], // bank back along the rear
+  [2.05, 2.0, -2.2], // push back and up
+  [0.7, 2.35, -2.6], // arc across the back (right)
+  [-1.3, 2.35, -2.6], // arc across the back (left)
+  [-2.9, 2.05, -2.2], // finish the half-circle over the back-left
 ]
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
@@ -547,10 +547,11 @@ function Drone() {
   const group = useRef<THREE.Group>(null)
   const { actions } = useAnimations(animations, group)
   const curve = useMemo(
-    () => new THREE.CatmullRomCurve3(DRONE_ROUTE.map((w) => new THREE.Vector3(...w)), true, "catmullrom", 0.5),
+    () => new THREE.CatmullRomCurve3(DRONE_ROUTE.map((w) => new THREE.Vector3(...w)), false, "catmullrom", 0.5),
     [],
   )
   const p = useRef(0)
+  const dir = useRef(1)
   const flying = useRef(false)
   const landTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pos = useMemo(() => new THREE.Vector3(), [])
@@ -563,6 +564,7 @@ function Drone() {
     document.body.style.cursor = "pointer"
     if (!flying.current) {
       flying.current = true
+      dir.current = 1
       actions["hover"]?.reset().fadeIn(0.3).play()
     }
   }
@@ -582,13 +584,21 @@ function Drone() {
     const g = group.current
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
-    const speed = 1 / 11 // one lap ≈ 11s
+    const speed = 1 / 5 // one-way ≈ 5s
+    const LO = 0.06 // stays airborne (doesn't touch the desk) while active
     if (flying.current) {
-      p.current = (p.current + dt * speed) % 1
-    } else if (p.current > 0.0006) {
-      // not hovering anymore — finish the lap back to home, then stop
-      p.current += dt * speed
+      p.current += dir.current * speed * dt
       if (p.current >= 1) {
+        p.current = 1
+        dir.current = -1
+      } else if (p.current <= LO) {
+        p.current = LO
+        dir.current = 1
+      }
+    } else if (p.current > 0.0008) {
+      // returning home along the same path, then land
+      p.current -= speed * dt
+      if (p.current <= 0) {
         p.current = 0
         actions["hover"]?.fadeOut(0.8)
       }
