@@ -92,6 +92,14 @@ export default function Desktop() {
   const focus = (id: string) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, z: ++zTop.current } : w)))
   const move = (id: string, x: number, y: number) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, x, y } : w)))
 
+  // Log out — scroll back out of the screen to the hero desk.
+  const logout = () => {
+    setMobileApp(null)
+    const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
+    if (l) l.scrollTo(0, { duration: 1.6 })
+    else window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   // Reveal on scroll; when it lands, play the boot flourish once, then open About.
   useEffect(() => {
     const onScroll = () => {
@@ -141,7 +149,16 @@ export default function Desktop() {
           <span className="font-semibold">{topApp ? topApp.title.split(" — ")[1] ?? topApp.title : "Finder"}</span>
           <span className="hidden text-muted-foreground sm:inline">{topApp ? topApp.title.split(" — ")[0] : "Farhad Navayazdan"}</span>
         </div>
-        <Clock />
+        <div className="flex items-center gap-4">
+          <button
+            onClick={logout}
+            data-cursor="log out"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-foreground/70 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <span aria-hidden>⏻</span> Log out
+          </button>
+          <Clock />
+        </div>
       </div>
 
       {/* ===== Desktop (md+) : window manager ===== */}
@@ -200,7 +217,7 @@ export default function Desktop() {
             <span className="text-sm font-medium text-foreground/80">{mobileDef.title.split(" — ")[0]}</span>
             <span className="w-12" />
           </div>
-          <div className="min-h-0 flex-1 overflow-auto">
+          <div data-lenis-prevent className="min-h-0 flex-1 overflow-auto">
             <mobileDef.Body />
           </div>
         </div>

@@ -103,8 +103,10 @@ export default function DesktopWindow({
         <span className="w-12 shrink-0" />
       </div>
 
-      {/* Body */}
-      <div className="min-h-0 flex-1 overflow-auto overscroll-contain">{children}</div>
+      {/* Body — data-lenis-prevent lets it scroll natively despite smooth scroll */}
+      <div data-lenis-prevent className="min-h-0 flex-1 overflow-auto overscroll-contain">
+        {children}
+      </div>
     </div>
   )
 }
