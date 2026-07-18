@@ -447,12 +447,20 @@ const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
 const FLOWER_POS: [number, number, number] = [-3.35, 0, -0.9]
 const MINIONS_POS: [number, number, number] = [-2.05, 0, -1.75]
 const MINIONS_ROT: [number, number, number] = [0, 0.55, 0]
-const MINIONS_SCALE = 0.384
+const MINIONS_SCALE = 0.48
 const RUBIK_POS: [number, number, number] = [1.15, 0, 2.0]
 const RUBIK_ROT: [number, number, number] = [0, 0.4, 0]
-const DRONE_POS: [number, number, number] = [2.15, 0.05, -1.6]
-const DRONE_ROT: [number, number, number] = [0, -0.5, 0]
 const DRONE_SCALE = 0.6
+// Flight route (closed loop): home → over the minions → over the plant → sweep
+// back → home. Home (index 0) is low on the desk so it lands there.
+const DRONE_ROUTE: [number, number, number][] = [
+  [2.15, 0.12, -1.6], // home (parked on desk)
+  [0.6, 1.45, -2.05], // rise, cross behind the laptop
+  [-2.0, 1.4, -1.75], // over the minions
+  [-3.2, 1.25, -0.9], // over the plant
+  [-1.2, 1.5, 0.5], // sweep across the front
+  [1.9, 1.4, -0.7], // bank back toward home
+]
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
@@ -529,16 +537,23 @@ function Interactive({
   )
 }
 
-// Drone parked left of the lamp — hover to take off. It keeps flying (and
-// drifting) for a few seconds after the pointer leaves, then lands.
+// Drone parked left of the lamp. Hover → takes off and flies a loop over the
+// minions and the plant, then banks home. Keeps flying a few seconds after the
+// pointer leaves, finishes the lap, and lands back home.
 function Drone() {
   const { scene, animations } = useGLTF(DRONE)
   const model = useMemo(() => cloneSkinned(scene), [scene])
   const group = useRef<THREE.Group>(null)
   const { actions } = useAnimations(animations, group)
+  const curve = useMemo(
+    () => new THREE.CatmullRomCurve3(DRONE_ROUTE.map((w) => new THREE.Vector3(...w)), true, "catmullrom", 0.5),
+    [],
+  )
+  const p = useRef(0)
   const flying = useRef(false)
-  const lift = useRef(0)
   const landTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pos = useMemo(() => new THREE.Vector3(), [])
+  const ahead = useMemo(() => new THREE.Vector3(), [])
 
   const takeOff = () => {
     if (landTimer.current) {
@@ -554,38 +569,40 @@ function Drone() {
   const scheduleLand = () => {
     document.body.style.cursor = ""
     if (landTimer.current) clearTimeout(landTimer.current)
-    // keep flying a while, then land
     landTimer.current = setTimeout(() => {
-      flying.current = false
-      actions["hover"]?.fadeOut(0.8)
+      flying.current = false // finishes the current lap in useFrame, then lands
       landTimer.current = null
-    }, 4000)
+    }, 3000)
   }
   useEffect(() => () => {
     if (landTimer.current) clearTimeout(landTimer.current)
   }, [])
 
-  useFrame((state, dtRaw) => {
+  useFrame((_s, dtRaw) => {
     const g = group.current
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
-    lift.current += ((flying.current ? 1 : 0) - lift.current) * (1 - Math.pow(0.01, dt))
-    const l = lift.current
-    const t = state.clock.elapsedTime
-    // rise, bob, and drift a little while airborne — kept in the back-right
-    // corner so it never flies over/through the laptop.
-    g.position.set(
-      DRONE_POS[0] + Math.sin(t * 0.8) * 0.22 * l,
-      DRONE_POS[1] + l * 0.9 + Math.sin(t * 3.2) * 0.05 * l,
-      DRONE_POS[2] + Math.cos(t * 0.6) * 0.18 * l,
-    )
-    g.rotation.y = DRONE_ROT[1] + Math.sin(t * 0.5) * 0.3 * l
+    const speed = 1 / 11 // one lap ≈ 11s
+    if (flying.current) {
+      p.current = (p.current + dt * speed) % 1
+    } else if (p.current > 0.0006) {
+      // not hovering anymore — finish the lap back to home, then stop
+      p.current += dt * speed
+      if (p.current >= 1) {
+        p.current = 0
+        actions["hover"]?.fadeOut(0.8)
+      }
+    }
+    curve.getPointAt(p.current, pos)
+    g.position.copy(pos)
+    curve.getPointAt((p.current + 0.02) % 1, ahead)
+    const dx = ahead.x - pos.x
+    const dz = ahead.z - pos.z
+    if (dx * dx + dz * dz > 1e-6) g.rotation.y = Math.atan2(dx, dz) + Math.PI
   })
   return (
     <group
       ref={group}
-      position={DRONE_POS}
-      rotation={DRONE_ROT}
       scale={DRONE_SCALE}
       onPointerOver={(e) => {
         e.stopPropagation()
@@ -616,7 +633,22 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const phone = useAnchored(PHONE, 1.5, "bottom", "max")
   // Rigged model — bbox auto-fit misreads skinned meshes, so load raw + scale manually.
   const minionsGltf = useGLTF(MINIONS)
-  const minions = useMemo(() => cloneSkinned(minionsGltf.scene), [minionsGltf])
+  const minions = useMemo(() => {
+    const obj = cloneSkinned(minionsGltf.scene)
+    // Model ships unlit (KHR_materials_unlit) → glows in the dark. Convert to a
+    // lit material so it dims with the room.
+    const toLit = (mat: THREE.Material) => {
+      const b = mat as THREE.MeshBasicMaterial
+      if (!(b as unknown as { isMeshBasicMaterial?: boolean }).isMeshBasicMaterial) return mat
+      return new THREE.MeshStandardMaterial({ color: b.color, map: b.map ?? null, roughness: 0.75, metalness: 0 })
+    }
+    obj.traverse((n) => {
+      const m = n as THREE.Mesh
+      if (!m.isMesh) return
+      m.material = Array.isArray(m.material) ? m.material.map(toLit) : toLit(m.material)
+    })
+    return obj
+  }, [minionsGltf])
   const rubik = useAnchored(RUBIK, 0.38, "bottom")
   const phoneScreen = usePhoneScreen()
   // Blacken the phone's emissive (glowing white) display so our lock-screen
