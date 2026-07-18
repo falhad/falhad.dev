@@ -137,6 +137,11 @@ function useNameTexture() {
     x.font = `400 58px ${SF}`
     if ("letterSpacing" in x) (x as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "3px"
     x.fillText(profile.title, W / 2, H / 2 + 90)
+    // Hint near the bottom of the screen
+    if ("letterSpacing" in x) (x as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "6px"
+    x.fillStyle = "#6f6f76"
+    x.font = `500 34px ${SF}`
+    x.fillText("SCROLL OR CLICK TO EXPLORE ↓", W / 2, H - 90)
     const t = new THREE.CanvasTexture(c)
     t.anisotropy = 8
     t.colorSpace = THREE.SRGBColorSpace
@@ -553,14 +558,19 @@ function HoverMove({
 }) {
   const ref = useRef<THREE.Group>(null)
   const hovered = useRef(false)
-  const baseRz = rotation[2] ?? 0
-  useFrame((s, dtRaw) => {
+  const { pointer } = useThree()
+  const baseRx = rotation[0] ?? 0
+  const baseRy = rotation[1] ?? 0
+  useFrame((_s, dtRaw) => {
     const g = ref.current
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
-    // wobble in place (no lift)
-    const rz = baseRz + (hovered.current ? Math.sin(s.clock.elapsedTime * 7) * 0.018 : 0)
-    g.rotation.z += (rz - g.rotation.z) * (1 - Math.pow(0.01, dt))
+    // Subtle parallax tilt toward the pointer while hovered (like the laptop).
+    const k = hovered.current ? 1 : 0
+    const ty = baseRy + pointer.x * 0.16 * k
+    const tx = baseRx + -pointer.y * 0.1 * k
+    g.rotation.y += (ty - g.rotation.y) * (1 - Math.pow(0.004, dt))
+    g.rotation.x += (tx - g.rotation.x) * (1 - Math.pow(0.004, dt))
   })
   return (
     <group
