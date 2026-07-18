@@ -1039,6 +1039,14 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
         onPointerOut={() => (document.body.style.cursor = "")}
       >
         <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
+        {/* Large invisible tap target around the lamp — the lamp geometry itself
+            is thin and nearly impossible to hit with a fingertip on mobile.
+            Kept visible (opacity 0) so the raycaster still hits it; depthWrite
+            off + colorWrite off so it never affects the rendered image. */}
+        <mesh position={[LAMP_POS[0], 1.7, LAMP_POS[2]]}>
+          <boxGeometry args={[1.8, 3.8, 1.7]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
+        </mesh>
         {/* Desk-level glow hint on the lamp base while the light is off. */}
         <mesh position={[LAMP_POS[0] + 0.3, 0.15, LAMP_POS[2] - 0.6]} rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[0.5, 48]} />
@@ -1074,15 +1082,17 @@ function Lights({ lampOn }: { lampOn: boolean }) {
     const step = dt / LAMP_RAMP
     lvl.current = clamp(lvl.current + clamp(target - lvl.current, -step, step), 0, 1)
     const l = smooth(lvl.current)
-    // Dark: almost no global fill — only the moon cone reveals the lamp/laptop/mug.
-    // Lit: warm room-wide fill on top.
-    if (amb.current) amb.current.intensity = 0.02 + 0.95 * l
-    if (hemi.current) hemi.current.intensity = 0.02 + 1.05 * l
+    // Dark: a small global floor so the WHOLE desk reads as dim (not pure black)
+    // even when the camera is pulled back on mobile — plus the moon cone for the
+    // dramatic pool of light on the center. Lit: warm room-wide fill on top.
+    if (amb.current) amb.current.intensity = 0.07 + 0.9 * l
+    if (hemi.current) hemi.current.intensity = 0.07 + 1.0 * l
     if (fill.current) fill.current.intensity = 0.72 * l
     if (spot.current) spot.current.intensity = 58 * l
     if (moon.current) moon.current.intensity = 7 * (1 - l)
-    // Fade the environment HDR with the lamp instead of popping it in.
-    state.scene.environmentIntensity = 0.03 + 0.67 * l
+    // Fade the environment HDR with the lamp instead of popping it in. The dark
+    // floor (0.09) is what lights the desk edges outside the moon cone.
+    state.scene.environmentIntensity = 0.09 + 0.61 * l
   })
   return (
     <>
@@ -1096,10 +1106,10 @@ function Lights({ lampOn }: { lampOn: boolean }) {
       <spotLight
         ref={moon}
         position={[1.4, 5, 1.6]}
-        angle={0.62}
+        angle={0.9}
         penumbra={1}
         intensity={0}
-        distance={16}
+        distance={22}
         decay={2}
         color="#8ea6c6"
       />

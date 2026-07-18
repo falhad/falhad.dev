@@ -154,7 +154,15 @@ export default function Hero() {
           </p>
         </header>
 
-        {dialog ? <LampDialog text={dialog.text} canClose={dialog.canClose} /> : null}
+        {dialog ? (
+          <LampDialog
+            text={dialog.text}
+            canClose={dialog.canClose}
+            // The opening dark prompt (canClose:false) doubles as a big tap
+            // target that turns the lamp on — reliable where the 3D lamp isn't.
+            onActivate={!dialog.canClose && !lampOn ? toggleLamp : undefined}
+          />
+        ) : null}
 
         <div ref={overlayRef}>
           {/* Dark scrim so the overlay text grounds against the dim room. */}
