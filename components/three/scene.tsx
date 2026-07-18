@@ -194,6 +194,93 @@ function useStickyTexture() {
   }, [])
 }
 
+// The phone's lock screen — a canvas texture that cycles notifications on tap.
+function usePhoneScreen() {
+  return useMemo(() => {
+    const W = 540
+    const H = 1160
+    const c = document.createElement("canvas")
+    c.width = W
+    c.height = H
+    const x = c.getContext("2d")!
+    const tex = new THREE.CanvasTexture(c)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.anisotropy = 8
+    const notifs = [
+      { icon: "💬", app: "MESSAGES", title: "Recruiter", msg: "Are you available? 👀" },
+      { icon: "⭐", app: "GITHUB", title: "New star", msg: "Someone starred your repo" },
+      { icon: "✅", app: "ACTIONS", title: "Build passed", msg: "All green in 42s. Ship it." },
+      { icon: "💤", app: "SLACK", title: "3 unread", msg: "…all can wait." },
+    ]
+    let i = 0
+    const rr = (px: number, py: number, w: number, h: number, r: number) => {
+      x.beginPath()
+      x.roundRect(px, py, w, h, r)
+    }
+    const draw = () => {
+      const g = x.createLinearGradient(0, 0, 0, H)
+      g.addColorStop(0, "#20335c")
+      g.addColorStop(1, "#0a0f1c")
+      x.fillStyle = g
+      x.fillRect(0, 0, W, H)
+      // clock
+      x.fillStyle = "#fff"
+      x.textAlign = "center"
+      x.font = "600 140px -apple-system, 'Helvetica Neue', Arial, sans-serif"
+      x.fillText("9:41", W / 2, 190)
+      x.fillStyle = "#dde5f3"
+      x.font = "400 42px -apple-system, Arial, sans-serif"
+      x.fillText("Saturday, July 18", W / 2, 255)
+      // notification card
+      const n = notifs[i % notifs.length]
+      const cx = 44
+      const cy = 360
+      const cw = W - 88
+      const ch = 220
+      x.fillStyle = "rgba(255,255,255,0.94)"
+      rr(cx, cy, cw, ch, 40)
+      x.fill()
+      // icon tile
+      x.fillStyle = "#eef2f8"
+      rr(cx + 30, cy + 40, 96, 96, 22)
+      x.fill()
+      x.font = "58px sans-serif"
+      x.textAlign = "center"
+      x.fillText(n.icon, cx + 30 + 48, cy + 40 + 66)
+      // text
+      x.textAlign = "left"
+      x.fillStyle = "#111"
+      x.font = "700 42px -apple-system, Arial, sans-serif"
+      x.fillText(n.title, cx + 152, cy + 78)
+      x.fillStyle = "#333"
+      x.font = "400 38px -apple-system, Arial, sans-serif"
+      const words = n.msg.split(" ")
+      let line = ""
+      let ly = cy + 132
+      for (const w of words) {
+        if (x.measureText(line + w).width > cw - 180) {
+          x.fillText(line.trim(), cx + 152, ly)
+          line = w + " "
+          ly += 46
+        } else line += w + " "
+      }
+      x.fillText(line.trim(), cx + 152, ly)
+      x.fillStyle = "#8b93a3"
+      x.textAlign = "right"
+      x.font = "30px -apple-system, Arial, sans-serif"
+      x.fillText("now", cx + cw - 30, cy + 60)
+      // hint
+      x.textAlign = "center"
+      x.fillStyle = "rgba(255,255,255,0.5)"
+      x.font = "34px -apple-system, Arial, sans-serif"
+      x.fillText("tap for more", W / 2, H - 80)
+      tex.needsUpdate = true
+    }
+    draw()
+    return { texture: tex, next: () => { i = (i + 1) % notifs.length; draw() } }
+  }, [])
+}
+
 // Camera keyframes: top-down on the desk → eye-level looking at the open laptop.
 const CAM_TOP = new THREE.Vector3(0, 8.0, 2.6)
 const CAM_EYE = new THREE.Vector3(0, 1.7, 7.4)
@@ -203,15 +290,19 @@ const LOOK_EYE = new THREE.Vector3(0, 0.7, 0)
 const LOOK_INTO = new THREE.Vector3(0, 1.12, -0.2) // straight into the screen
 
 const LID_CLOSED = 1.78 // radians; model default (0) is open
-const MUG_POS: [number, number, number] = [3.0, 0, 0.75]
+const MUG_POS: [number, number, number] = [3.25, 0, 0.45]
 const NOTEBOOK_POS: [number, number, number] = [-2.95, 0, 1.35]
 const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
 // Sticky note pose — local to the notebook group, resting on the cover.
 const STICKY_POS: [number, number, number] = [0.05, 0.19, 0]
 const STICKY_ROT: [number, number, number] = [-Math.PI / 2, 0, 0.25]
 const STICKY_SIZE = 0.5
-const PHONE_POS: [number, number, number] = [2.35, 0.02, 2.2] // near the coffee mug
-const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, -0.35] // lay flat on the desk
+const PHONE_POS: [number, number, number] = [2.35, 0.02, 2.5] // near (below) the coffee mug
+const PHONE_TWIST = -0.35
+const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, PHONE_TWIST] // lay flat on the desk
+const PHONE_SCREEN: [number, number] = [0.62, 1.35]
+// Local offset (in the phone's own space) placing the screen just above its face.
+const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.75, 0.07]
 const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
 const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
@@ -240,12 +331,6 @@ const MAC_LINES = [
   "*knock knock* …I open when you scroll ↓",
   "Locked for now — scroll down and watch me open ↓",
   "Patience. I unfold as you scroll ↓",
-]
-const PHONE_LINES = [
-  "📱 Recruiter: 'Are you available?' …read 14:32. (building this instead)",
-  "📱 GitHub: someone starred a repo ⭐",
-  "📱 CI: build passed ✅ in 42s. Ship it.",
-  "📱 3 unread — all Slack, all can wait.",
 ]
 const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)]
 const quip = (text: string) => window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
@@ -311,6 +396,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const flower = useAnchored(FLOWER, 0.72, "bottom")
   const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
   const phone = useAnchored(PHONE, 1.5, "bottom", "max")
+  const phoneScreen = usePhoneScreen()
   const nameTex = useNameTexture()
   const stickyTex = useStickyTexture()
 
@@ -338,7 +424,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       quip(pickLine(PLANT_LINES))
     }
   }
-  const onPhone = () => quip(pickLine(PHONE_LINES))
+  const onPhone = () => phoneScreen.next()
   const onMac = () => {
     quip(pickLine(MAC_LINES))
     const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
@@ -460,9 +546,17 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       <Interactive position={FLOWER_POS} onClick={onPlant}>
         <primitive object={flower} />
       </Interactive>
-      <Interactive position={PHONE_POS} rotation={PHONE_ROT} onClick={onPhone}>
+      {/* Phone + its lock-screen overlay (child, so it tracks the phone exactly).
+          Tap the screen to cycle notifications. */}
+      <group position={PHONE_POS} rotation={PHONE_ROT}>
         <primitive object={phone} />
-      </Interactive>
+        <Interactive position={PHONE_SCREEN_OFFSET} onClick={onPhone}>
+          <mesh>
+            <planeGeometry args={PHONE_SCREEN} />
+            <meshBasicMaterial map={phoneScreen.texture} toneMapped={false} side={THREE.DoubleSide} />
+          </mesh>
+        </Interactive>
+      </group>
 
       {/* The lamp is the light switch: click anywhere on it to toggle the room light. */}
       <group
