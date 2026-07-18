@@ -638,9 +638,9 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       s.position.y = ph * 1.25
       s.position.x = Math.sin(ph * 4 + i * 1.7) * 0.16 * ph
       s.position.z = Math.cos(ph * 3 + i * 2.1) * 0.11 * ph
-      const sc = 0.16 + ph * 0.55
-      s.scale.set(sc, sc * 1.35, sc)
-      ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.12
+      const sc = 0.1 + ph * 0.32
+      s.scale.set(sc, sc * 1.4, sc)
+      ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.05
     })
   })
 
@@ -669,7 +669,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       </Interactive>
       {/* Continuous wispy steam above the mug. */}
       <group position={[MUG_POS[0], 0.5, MUG_POS[2]]}>
-        {Array.from({ length: 7 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <sprite
             key={i}
             ref={(el) => {
