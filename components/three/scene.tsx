@@ -455,11 +455,11 @@ const DRONE_SCALE = 0.6
 // back → home. Home (index 0) is low on the desk so it lands there.
 const DRONE_ROUTE: [number, number, number][] = [
   [2.15, 0.12, -1.6], // home (parked on desk)
-  [0.6, 1.45, -2.05], // rise, cross behind the laptop
-  [-2.0, 1.4, -1.75], // over the minions
-  [-3.2, 1.25, -0.9], // over the plant
-  [-1.2, 1.5, 0.5], // sweep across the front
-  [1.9, 1.4, -0.7], // bank back toward home
+  [0.6, 2.1, -2.05], // rise, cross behind the laptop
+  [-2.0, 2.15, -1.75], // over the minions
+  [-3.2, 1.95, -0.9], // over the plant
+  [-1.2, 2.2, 0.5], // sweep across the front
+  [1.9, 2.05, -0.7], // bank back toward home
 ]
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
@@ -596,7 +596,7 @@ function Drone() {
     // Always face the viewer (camera) — like it's watching you.
     const dcx = _s.camera.position.x - pos.x
     const dcz = _s.camera.position.z - pos.z
-    g.rotation.y = Math.atan2(dcx, dcz) + Math.PI
+    g.rotation.y = Math.atan2(dcx, dcz)
   })
   return (
     <group
