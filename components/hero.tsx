@@ -1,101 +1,168 @@
-'use client'
+"use client"
+import dynamic from "next/dynamic"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { profile } from "@/lib/portfolio-data"
+import Magnetic from "@/components/motion/magnetic"
+import LampDialog from "@/components/hero/lamp-dialog"
+import { useReducedMotion } from "@/lib/use-reduced-motion"
 
-import { useLayoutEffect, useRef } from "react"
-import gsap from "gsap"
-import { ArrowRight, Sparkles } from "lucide-react"
-import { Button } from "@/components/ui/button"
+// three touches window at module load — never server-render it.
+const Scene = dynamic(() => import("@/components/three/scene"), { ssr: false })
+
+const LAMP_KEY = "farhad.lamp.on"
+
+// The room "talks" to the visitor. Lines are picked at random each time.
+const DARK_LINES = [
+  "Whoa — it's pitch black in here, I can't see a thing! Could you hit the desk lamp for me?",
+  "Uh oh, looks like nobody paid the electricity bill. Mind flicking the lamp on?",
+  "It's darker than my coffee in here. Tap the desk lamp so we can see the desk?",
+  "I may have coded with the lights off again… be a hero and click the lamp?",
+  "Error 404: photons not found. Please press the desk lamp to continue.",
+]
+const OFF_LINES = [
+  "Hey! Who turned off the lights? I was working here!",
+  "Rude. Back to the darkness, I see. 🕶️",
+  "Great, now I have to code by vibes again.",
+  "Lights off? Bold move. My eyes thank you and also hate you.",
+  "You know the lamp is decorative *and* functional, right? …fine, spooky mode it is.",
+]
+const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)]
 
 export default function Hero() {
-  const rootRef = useRef<HTMLElement | null>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const reduced = useReducedMotion()
 
-  useLayoutEffect(() => {
-    if (!rootRef.current) return
+  const [lampOn, setLampOn] = useState(true)
+  const [dialog, setDialog] = useState<{ text: string; canClose: boolean } | null>(null)
+  const lampRef = useRef(true)
+  const offTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.8 } })
+  // Show a self-dismissing quip bubble (used by lamp-off + object clicks).
+  const flash = useCallback((text: string) => {
+    if (offTimer.current) clearTimeout(offTimer.current)
+    setDialog({ text, canClose: true })
+    offTimer.current = setTimeout(() => setDialog(null), 4500)
+  }, [])
 
-      tl.from(".hero-badge", { y: 16, opacity: 0 })
-        .from(".hero-title", { y: 20, opacity: 0 }, "-=0.4")
-        .from(".hero-subtitle", { y: 18, opacity: 0 }, "-=0.5")
-        .from(".hero-desc", { y: 18, opacity: 0 }, "-=0.55")
-        .from(".hero-cta", { y: 22, opacity: 0 }, "-=0.55")
-        .from(".hero-card", { y: 30, opacity: 0, scale: 0.98 }, "-=0.6")
+  // Desk objects talk to the DOM via window events (dispatched from the 3D scene).
+  useEffect(() => {
+    const onBubble = (e: Event) => {
+      const d = (e as CustomEvent<{ text: string }>).detail
+      if (d?.text) flash(d.text)
+    }
+    window.addEventListener("desk-bubble", onBubble)
+    return () => window.removeEventListener("desk-bubble", onBubble)
+  }, [flash])
 
-      // Load UnicornStudio script and initialize (from provided snippet)
-      if (typeof window !== 'undefined') {
-        const w = window as any
-        if (!w.UnicornStudio) {
-          w.UnicornStudio = { isInitialized: false }
-          const s = document.createElement('script')
-          s.src = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.29/dist/unicornStudio.umd.js'
-          s.onload = function () {
-            if (!w.UnicornStudio.isInitialized && typeof w.UnicornStudio.init === 'function') {
-              w.UnicornStudio.init()
-              w.UnicornStudio.isInitialized = true
-            }
-          }
-          ;(document.head || document.body).appendChild(s)
-        } else if (!w.UnicornStudio.isInitialized && typeof w.UnicornStudio.init === 'function') {
-          w.UnicornStudio.init()
-          w.UnicornStudio.isInitialized = true
-        }
+  // First visit (and only with the 3D scene): start in the dark with a prompt.
+  useEffect(() => {
+    if (reduced) return
+    let seen = false
+    try {
+      seen = localStorage.getItem(LAMP_KEY) === "1"
+    } catch {
+      seen = false
+    }
+    if (!seen) {
+      lampRef.current = false
+      setLampOn(false)
+      setDialog({ text: pick(DARK_LINES), canClose: false })
+    }
+    return () => {
+      if (offTimer.current) clearTimeout(offTimer.current)
+    }
+  }, [reduced])
+
+  const toggleLamp = useCallback(() => {
+    const next = !lampRef.current
+    lampRef.current = next
+    setLampOn(next)
+    if (offTimer.current) clearTimeout(offTimer.current)
+    if (next) {
+      setDialog(null)
+      try {
+        localStorage.setItem(LAMP_KEY, "1")
+      } catch {
+        /* private mode — skip persistence */
       }
-    }, rootRef)
+    } else {
+      // Playful quip; auto-dismisses so it doesn't linger in the dark.
+      flash(pick(OFF_LINES))
+    }
+  }, [flash])
 
-    return () => ctx.revert()
+  // Fade the overlay out as the camera pushes into the screen.
+  useEffect(() => {
+    const onScroll = () => {
+      const el = sectionRef.current
+      const ov = overlayRef.current
+      if (!el || !ov) return
+      const r = el.getBoundingClientRect()
+      const range = r.height - window.innerHeight
+      const p = range > 0 ? Math.min(1, Math.max(0, -r.top / range)) : 0
+      const t = Math.min(1, Math.max(0, (p - 0.55) / 0.22))
+      ov.style.opacity = String(1 - t * t * (3 - 2 * t))
+    }
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
   return (
-    <section ref={rootRef} className="relative min-h-[100svh] overflow-hidden text-foreground">
-      {/* Unicorn full-bleed background (UnicornStudio embed) */}
-      <div className="absolute inset-0 unicorn">
-        <div
-          className="absolute inset-0 w-full h-full"
-          data-us-project="CaA4koIwYXW3451puluq"
-          style={{ width: '100%', height: '100%' }}
-        />
-      </div>
+    // Tall section so the scroll-scripted desk sequence has room to play while
+    // the inner container stays pinned. Content flows normally after it.
+    <section ref={sectionRef} id="hero" aria-label="Intro" className="relative h-[300vh]">
+      <div
+        className="sticky top-0 h-screen overflow-hidden"
+        style={{ background: "radial-gradient(120% 100% at 50% 28%, #191512, #0c0906 72%)" }}
+      >
+        <Scene lampOn={lampOn} onToggleLamp={toggleLamp} />
 
-      {/* Ambient gradient glows */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 -left-40 h-72 w-72 rounded-full bg-fuchsia-500/30 blur-3xl animate-blob" />
-        <div className="absolute -bottom-40 -right-40 h-72 w-72 rounded-full bg-cyan-500/30 blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.06),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.06),transparent_45%)]" />
-      </div>
+        <h1 className="sr-only">{profile.name}</h1>
 
-      <div className="relative z-10 container mx-auto px-4 py-12 md:py-16">
-        <div className="text-center md:text-left">
-          <div className="hero-badge inline-flex items-center gap-2 rounded-full bg-foreground/10 px-3 py-1 ring-1 ring-foreground/20 backdrop-blur">
-            <Sparkles className="h-4 w-4 text-yellow-300" />
-            <span className="text-xs uppercase tracking-wider text-foreground/80">Hello, I’m</span>
+        {dialog ? (
+          <LampDialog text={dialog.text} canClose={dialog.canClose} onClose={() => setDialog(null)} />
+        ) : null}
+
+        <div ref={overlayRef}>
+          {/* Dark scrim so the overlay text grounds against the dim room. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[42vh]"
+            style={{ background: "linear-gradient(to top, #0c0906 12%, rgba(12,9,6,0))" }}
+          />
+
+          {/* Minimal overlay — light-on-dark for the dim room. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-14 px-6 md:px-12">
+            <div className="mx-auto max-w-6xl">
+              <p className="mb-3 text-[0.72rem] font-medium uppercase tracking-[0.22em] text-[#9a8f7d]">
+                {profile.location} · 14 years
+              </p>
+              <p className="max-w-md text-lg leading-relaxed text-[#d8cfc2]">{profile.tagline}</p>
+              <div className="pointer-events-auto mt-6">
+                <Magnetic>
+                  <a
+                    href="#"
+                    data-cursor="enter"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
+                      const to = document.documentElement.scrollHeight
+                      if (l) l.scrollTo(to, { duration: 2.4 })
+                      else window.scrollTo({ top: to, behavior: "smooth" })
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#ece5d8] px-7 py-3 text-[#1a1512] transition-colors hover:bg-[var(--terracotta)] hover:text-white"
+                  >
+                    Enter workspace ↓
+                  </a>
+                </Magnetic>
+              </div>
+            </div>
           </div>
 
-          <h1 className="hero-title mt-4 text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl lg:text-7xl">
-            <span className="bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              Farhad Navayazdan
-            </span>
-          </h1>
-          <p className="hero-subtitle mt-3 max-w-xl text-lg text-foreground/80 sm:text-xl md:mt-4 md:leading-relaxed">
-            Senior Software Developer
-          </p>
-          <p className="hero-desc mt-5 max-w-xl text-balance text-foreground/70 sm:text-lg md:mt-6">
-            I build fast, delightful web experiences — from design systems to complex applications.
-          </p>
-
-          <div className="hero-cta mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center md:justify-start">
-            <Button
-              asChild
-              size="lg"
-              className="rounded-xl px-6 py-6 text-base shadow-lg shadow-fuchsia-500/20 bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500 hover:shadow-fuchsia-500/30 focus-visible:ring-offset-0"
-            >
-              <a
-                href="mailto:cs.arcxx@gmail.com?subject=Hello%20Farhad&body=Hi%20Farhad%2C%0A%0A"
-                aria-label="Contact Farhad via email"
-              >
-                Contact me
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </a>
-            </Button>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-pulse text-[0.7rem] font-medium uppercase tracking-[0.22em] text-[#9a8f7d]">
+            scroll
           </div>
         </div>
       </div>
