@@ -36,6 +36,8 @@ export default function DesktopWindow({
   const drag = useRef<{ dx: number; dy: number } | null>(null)
   const [open, setOpen] = useState(false)
   const [closing, setClosing] = useState(false)
+  const [max, setMax] = useState(false)
+  const stop = (e: React.PointerEvent) => e.stopPropagation() // keep drag off the buttons
 
   // Genie-ish open: grow up from the dock (bottom), settle with a spring.
   useEffect(() => {
@@ -70,9 +72,9 @@ export default function DesktopWindow({
           : "border-white/10 bg-[#17140f]/45 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)]",
       )}
       style={{
-        left: x,
-        top: y,
-        width,
+        ...(max
+          ? { left: 12, top: 44, width: "calc(100vw - 24px)", height: "calc(100vh - 128px)", maxHeight: "none" as const }
+          : { left: x, top: y, width }),
         zIndex: z,
         transformOrigin: "center bottom",
         transform: closing
@@ -101,19 +103,28 @@ export default function DesktopWindow({
         <div className="group flex items-center gap-2">
           <button
             aria-label="Close"
+            onPointerDown={stop}
             onClick={(e) => { e.stopPropagation(); handleClose() }}
-            className="flex h-3 w-3 items-center justify-center rounded-full bg-[#ff5f57] text-[8px] text-black/50"
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-[#ff5f57] text-[8px] font-bold text-black/60"
           >
             <span className="opacity-0 group-hover:opacity-100">✕</span>
           </button>
           <button
             aria-label="Minimize"
+            onPointerDown={stop}
             onClick={(e) => { e.stopPropagation(); onMinimize(id) }}
-            className="flex h-3 w-3 items-center justify-center rounded-full bg-[#febc2e] text-[8px] text-black/50"
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-[#febc2e] text-[9px] font-bold text-black/60"
           >
             <span className="opacity-0 group-hover:opacity-100">−</span>
           </button>
-          <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+          <button
+            aria-label="Zoom"
+            onPointerDown={stop}
+            onClick={(e) => { e.stopPropagation(); setMax((m) => !m) }}
+            className="flex h-3 w-3 items-center justify-center rounded-full bg-[#28c840] text-[7px] font-bold text-black/60"
+          >
+            <span className="opacity-0 group-hover:opacity-100">{max ? "–" : "+"}</span>
+          </button>
         </div>
         <span className="flex-1 truncate text-center text-sm font-medium text-foreground/80">{title}</span>
         <span className="w-12 shrink-0" />

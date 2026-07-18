@@ -311,15 +311,14 @@ function DockIcon({ a, mx, active, onClick }: { a: AppDef; mx: number | null; ac
     <button
       ref={ref}
       onClick={onClick}
-      data-cursor={a.title.split(" — ")[0].toLowerCase()}
-      style={{ transform: `translateY(${-(scale - 1) * 26}px) scale(${scale})`, transformOrigin: "bottom", transition: "transform 120ms ease-out" }}
-      className="group relative flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.05] text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/10"
+      style={{ transform: `translateY(${-(scale - 1) * 30}px) scale(${scale})`, transformOrigin: "bottom", transition: "transform 110ms ease-out" }}
+      className="group relative flex h-14 w-14 items-end justify-center pb-1"
     >
-      <span>{a.icon}</span>
-      <span className="pointer-events-none absolute -top-10 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[0.65rem] font-medium text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100">
+      <span className="text-[2.1rem] leading-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.55)]">{a.icon}</span>
+      <span className="pointer-events-none absolute -top-11 whitespace-nowrap rounded-lg border border-white/15 bg-black/70 px-2.5 py-1 text-[0.68rem] font-medium text-white opacity-0 shadow-lg backdrop-blur-xl transition-opacity duration-150 group-hover:opacity-100">
         {a.title.split(" — ")[0]}
       </span>
-      {active ? <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-white/70" /> : null}
+      {active ? <span className="absolute bottom-0 h-[3px] w-[3px] rounded-full bg-white/85" /> : null}
     </button>
   )
 }
