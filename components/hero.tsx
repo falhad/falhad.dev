@@ -121,9 +121,7 @@ export default function Hero() {
 
         <h1 className="sr-only">{profile.name}</h1>
 
-        {dialog ? (
-          <LampDialog text={dialog.text} canClose={dialog.canClose} onClose={() => setDialog(null)} />
-        ) : null}
+        {dialog ? <LampDialog text={dialog.text} canClose={dialog.canClose} /> : null}
 
         <div ref={overlayRef}>
           {/* Dark scrim so the overlay text grounds against the dim room. */}

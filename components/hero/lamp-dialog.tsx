@@ -1,43 +1,54 @@
 "use client"
+import { useEffect, useState } from "react"
+import { useReducedMotion } from "@/lib/use-reduced-motion"
 
-// A plain black bubble with white text in a playful font. `canClose` is false
-// for the opening "it's dark" prompt (only way out is clicking the lamp) and
-// true for the playful lights-off quips.
-export default function LampDialog({
-  text,
-  canClose,
-  onClose,
-}: {
-  text: string
-  canClose: boolean
-  onClose: () => void
-}) {
+// Plain white text in a playful font at the bottom-left of the screen, typed
+// out character by character. `canClose` false = the opening "it's dark"
+// prompt (adds a hint to click the lamp); quips auto-dismiss upstream.
+export default function LampDialog({ text, canClose }: { text: string; canClose: boolean }) {
+  const reduced = useReducedMotion()
+  const [shown, setShown] = useState(reduced ? text : "")
+  const [done, setDone] = useState(reduced)
+
+  useEffect(() => {
+    if (reduced) {
+      setShown(text)
+      setDone(true)
+      return
+    }
+    setShown("")
+    setDone(false)
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setShown(text.slice(0, i))
+      if (i >= text.length) {
+        clearInterval(id)
+        setDone(true)
+      }
+    }, 24)
+    return () => clearInterval(id)
+  }, [text, reduced])
+
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-24 z-40 flex justify-center px-4 md:top-28">
-      <div
-        className="pointer-events-auto w-[min(440px,92vw)] rounded-2xl bg-black/90 px-6 py-5 text-center text-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-sm"
+    <div className="pointer-events-none absolute bottom-16 left-6 z-40 max-w-md md:bottom-20 md:left-12">
+      <p
+        className="min-h-[1.4em] text-lg leading-snug text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]"
         style={{ fontFamily: '"Comic Sans MS", "Comic Sans", "Chalkboard SE", "Marker Felt", cursive' }}
       >
-        <p className="text-[1.05rem] leading-snug">{text}</p>
-        {canClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            data-cursor="ok"
-            className="mt-4 rounded-full border border-white/25 px-5 py-1.5 text-sm text-white/90 transition-colors hover:bg-white hover:text-black"
-          >
-            ok fine
-          </button>
-        ) : (
-          <p className="mt-3 text-sm text-white/60">
-            <span className="lampdlg-blink">👉</span> click the desk lamp
-          </p>
-        )}
-      </div>
+        {shown}
+        {!done ? <span className="lampdlg-caret">▋</span> : null}
+      </p>
+      {done && !canClose ? (
+        <p className="mt-2 text-sm text-white/70 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+          <span className="lampdlg-blink">👉</span> click the desk lamp
+        </p>
+      ) : null}
       <style>{`
         .lampdlg-blink { animation: lampdlg-blink 0.9s steps(1) infinite; display: inline-block; }
+        .lampdlg-caret { animation: lampdlg-blink 0.7s steps(1) infinite; margin-left: 1px; }
         @keyframes lampdlg-blink { 50% { opacity: 0; } }
-        @media (prefers-reduced-motion: reduce) { .lampdlg-blink { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .lampdlg-blink, .lampdlg-caret { animation: none; } }
       `}</style>
     </div>
   )
