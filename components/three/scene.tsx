@@ -198,7 +198,7 @@ function useStickyTexture() {
 // with a live clock + a rotating notification, and taps advance it too.
 function usePhoneScreen() {
   const data = useMemo(() => {
-    const W = 560
+    const W = 596
     const H = 1285
     const c = document.createElement("canvas")
     c.width = W
@@ -418,7 +418,7 @@ const STICKY_SIZE = 0.5
 const PHONE_POS: [number, number, number] = [2.35, 0.02, 2.5] // near (below) the coffee mug
 const PHONE_TWIST = -0.35
 const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, PHONE_TWIST] // lay flat on the desk
-const PHONE_SCREEN: [number, number] = [0.66, 1.52]
+const PHONE_SCREEN: [number, number] = [0.675, 1.455] // matches the model's display area
 // Local offset (in the phone's own space) placing the screen just above its face.
 const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
 const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
