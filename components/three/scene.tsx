@@ -435,6 +435,13 @@ const LOOK_TOP = new THREE.Vector3(0, 0, 0.3)
 const LOOK_EYE = new THREE.Vector3(0, 0.7, 0)
 const LOOK_INTO = new THREE.Vector3(0, 1.12, -0.2) // straight into the screen
 
+// Camera framing is tuned for a landscape desktop. On narrow/portrait screens
+// the desk gets cropped, so we widen the FOV and dolly back to fit it in.
+const DEG = Math.PI / 180
+const BASE_FOV = 42
+const BASE_HALF_TAN = Math.tan((BASE_FOV / 2) * DEG)
+const REF_ASPECT = 1.5 // design aspect the keyframes were composed for
+
 const LID_CLOSED = 1.78 // radians; model default (0) is open
 const MUG_POS: [number, number, number] = [3.25, 0, 0.45]
 const NOTEBOOK_POS: [number, number, number] = [-2.95, 0, 1.35]
@@ -881,11 +888,33 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     v3lerp(camLook.current, LOOK_TOP, LOOK_EYE, camT)
     v3lerp(camPos.current, camPos.current, CAM_INTO, pushT)
     v3lerp(camLook.current, camLook.current, LOOK_INTO, pushT)
+
+    // --- Aspect-adaptive framing (fixes the desk being cropped on mobile) ---
+    // Restore the horizontal coverage lost on narrow screens by splitting the
+    // correction between a (capped) FOV widen and a dolly-back. Both fade out as
+    // the camera dives into the screen (pushT→1), leaving that ending untouched.
+    const aspect = state.size.width / Math.max(1, state.size.height)
+    const narrow = clamp(REF_ASPECT / aspect, 1, 3.2) // 1 on landscape, grows on portrait
+    const fovScale = clamp(Math.sqrt(narrow), 1, 1.55) // widen FOV up to ~55%
+    const dolly = narrow / fovScale // the rest as extra camera distance
+    const ease = 1 - pushT
+    const fovScaleEff = 1 + (fovScale - 1) * ease
+    const dollyEff = 1 + (dolly - 1) * ease
+    const cam = state.camera as THREE.PerspectiveCamera
+    const targetFov = (2 * Math.atan(BASE_HALF_TAN * fovScaleEff)) / DEG
+    if (Math.abs(cam.fov - targetFov) > 0.01) {
+      cam.fov = targetFov
+      cam.updateProjectionMatrix()
+    }
+    // Push the camera back along its view ray (scale distance from the look point).
+    const lx = camLook.current.x
+    const ly = camLook.current.y
+    const lz = camLook.current.z
     const parallax = camT * (1 - pushT)
     state.camera.position.set(
-      camPos.current.x + px.current * 0.5 * parallax,
-      camPos.current.y + py.current * 0.3 * parallax,
-      camPos.current.z,
+      lx + (camPos.current.x - lx) * dollyEff + px.current * 0.5 * parallax,
+      ly + (camPos.current.y - ly) * dollyEff + py.current * 0.3 * parallax,
+      lz + (camPos.current.z - lz) * dollyEff,
     )
     state.camera.lookAt(camLook.current)
 
