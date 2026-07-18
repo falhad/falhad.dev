@@ -1,9 +1,10 @@
 "use client"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { Environment, useGLTF } from "@react-three/drei"
+import { Environment, useGLTF, useAnimations } from "@react-three/drei"
 import { EffectComposer, Bloom } from "@react-three/postprocessing"
 import { Suspense, useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js"
 import { profile } from "@/lib/portfolio-data"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
 
@@ -14,6 +15,9 @@ const NOTEBOOK = "/models/notebook_and_pen.glb" // user-supplied
 const FLOWER = "/models/small_flower._polycam_app.glb" // user-supplied
 const LAMP = "/models/desk_lamp.glb" // user-supplied
 const PHONE = "/models/phone.glb" // user-supplied (iPhone)
+const MINIONS = "/models/minions.glb" // user-supplied (3 minions on an iPad)
+const RUBIK = "/models/rubik.glb" // user-supplied
+const DRONE = "/models/drone.glb" // user-supplied (animated, spec-gloss→metalrough)
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
 const SCREEN_MESH = "Object_123" // the emissive display (lid) — recolored black so the name panel blends
 
@@ -441,6 +445,14 @@ const PHONE_SCREEN: [number, number] = [0.675, 1.455] // matches the model's dis
 // Local offset (in the phone's own space) placing the screen just above its face.
 const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
 const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
+const MINIONS_POS: [number, number, number] = [-2.05, 0, -1.75]
+const MINIONS_ROT: [number, number, number] = [0, 0.55, 0]
+const MINIONS_SCALE = 0.32
+const RUBIK_POS: [number, number, number] = [1.15, 0, 2.0]
+const RUBIK_ROT: [number, number, number] = [0, 0.4, 0]
+const DRONE_POS: [number, number, number] = [1.55, 0.05, -1.35]
+const DRONE_ROT: [number, number, number] = [0, -0.5, 0]
+const DRONE_SCALE = 0.6
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
@@ -517,6 +529,50 @@ function Interactive({
   )
 }
 
+// Drone parked left of the lamp — hover to spin up and lift off a little.
+function Drone() {
+  const { scene, animations } = useGLTF(DRONE)
+  const model = useMemo(() => cloneSkinned(scene), [scene])
+  const group = useRef<THREE.Group>(null)
+  const { actions } = useAnimations(animations, group)
+  const hovered = useRef(false)
+  const lift = useRef(0)
+  const start = () => {
+    hovered.current = true
+    document.body.style.cursor = "pointer"
+    const a = actions["hover"]
+    if (a) a.reset().fadeIn(0.25).play()
+  }
+  const end = () => {
+    hovered.current = false
+    document.body.style.cursor = ""
+    actions["hover"]?.fadeOut(0.5)
+  }
+  useFrame((state, dtRaw) => {
+    const g = group.current
+    if (!g) return
+    const dt = Math.min(dtRaw, 0.05)
+    lift.current += ((hovered.current ? 1 : 0) - lift.current) * (1 - Math.pow(0.008, dt))
+    const bob = hovered.current ? Math.sin(state.clock.elapsedTime * 3.2) * 0.04 : 0
+    g.position.set(DRONE_POS[0], DRONE_POS[1] + lift.current * 0.8 + bob, DRONE_POS[2])
+  })
+  return (
+    <group
+      ref={group}
+      position={DRONE_POS}
+      rotation={DRONE_ROT}
+      scale={DRONE_SCALE}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        start()
+      }}
+      onPointerOut={end}
+    >
+      <primitive object={model} />
+    </group>
+  )
+}
+
 function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const laptop = useRef<THREE.Group>(null)
   const nameMat = useRef<THREE.MeshBasicMaterial>(null)
@@ -533,6 +589,10 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const flower = useAnchored(FLOWER, 0.72, "bottom")
   const lamp = useAnchored(LAMP, 3.5, "bottom", "max")
   const phone = useAnchored(PHONE, 1.5, "bottom", "max")
+  // Rigged model — bbox auto-fit misreads skinned meshes, so load raw + scale manually.
+  const minionsGltf = useGLTF(MINIONS)
+  const minions = useMemo(() => cloneSkinned(minionsGltf.scene), [minionsGltf])
+  const rubik = useAnchored(RUBIK, 0.55, "bottom")
   const phoneScreen = usePhoneScreen()
   // Blacken the phone's emissive (glowing white) display so our lock-screen
   // content sits on a real black screen instead of looking like a floating layer.
@@ -693,6 +753,9 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       <Interactive position={FLOWER_POS} onClick={onPlant}>
         <primitive object={flower} />
       </Interactive>
+      <primitive object={minions} position={MINIONS_POS} rotation={MINIONS_ROT} scale={MINIONS_SCALE} />
+      <primitive object={rubik} position={RUBIK_POS} rotation={RUBIK_ROT} />
+      <Drone />
       {/* Phone + its lock-screen overlay (child, so it tracks the phone exactly).
           Tap the screen to cycle notifications. */}
       <group position={PHONE_POS} rotation={PHONE_ROT} scale={0.8}>
@@ -794,6 +857,9 @@ useGLTF.preload(NOTEBOOK)
 useGLTF.preload(FLOWER)
 useGLTF.preload(LAMP)
 useGLTF.preload(PHONE)
+useGLTF.preload(MINIONS)
+useGLTF.preload(RUBIK)
+useGLTF.preload(DRONE)
 
 export default function Scene({ lampOn = true, onToggleLamp = () => {} }: { lampOn?: boolean; onToggleLamp?: () => void }) {
   const reduced = useReducedMotion()
