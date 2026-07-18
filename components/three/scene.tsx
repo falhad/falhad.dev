@@ -2,7 +2,7 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Environment, useGLTF } from "@react-three/drei"
 import { EffectComposer, Bloom } from "@react-three/postprocessing"
-import { Suspense, useMemo, useRef } from "react"
+import { Suspense, useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { profile } from "@/lib/portfolio-data"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
@@ -194,9 +194,10 @@ function useStickyTexture() {
   }, [])
 }
 
-// The phone's lock screen — a canvas texture that cycles notifications on tap.
+// The phone's lock screen — a canvas texture. Off (black) by default; flashes on
+// with a live clock + a rotating notification, and taps advance it too.
 function usePhoneScreen() {
-  return useMemo(() => {
+  const data = useMemo(() => {
     const W = 540
     const H = 1160
     const c = document.createElement("canvas")
@@ -207,30 +208,39 @@ function usePhoneScreen() {
     tex.colorSpace = THREE.SRGBColorSpace
     tex.anisotropy = 8
     const notifs = [
-      { icon: "💬", app: "MESSAGES", title: "Recruiter", msg: "Are you available? 👀" },
-      { icon: "⭐", app: "GITHUB", title: "New star", msg: "Someone starred your repo" },
-      { icon: "✅", app: "ACTIONS", title: "Build passed", msg: "All green in 42s. Ship it." },
-      { icon: "💤", app: "SLACK", title: "3 unread", msg: "…all can wait." },
+      { icon: "💬", title: "Recruiter", msg: "Are you available? 👀" },
+      { icon: "⭐", title: "New star", msg: "Someone starred your repo" },
+      { icon: "✅", title: "Build passed", msg: "All green in 42s. Ship it." },
+      { icon: "💤", title: "3 unread", msg: "…all can wait." },
+      { icon: "☕", title: "Reminder", msg: "Refill coffee. Priority: critical." },
     ]
-    let i = 0
     const rr = (px: number, py: number, w: number, h: number, r: number) => {
       x.beginPath()
       x.roundRect(px, py, w, h, r)
     }
-    const draw = () => {
+    const draw = (on: boolean, i: number) => {
+      if (!on) {
+        x.fillStyle = "#000"
+        x.fillRect(0, 0, W, H)
+        tex.needsUpdate = true
+        return
+      }
       const g = x.createLinearGradient(0, 0, 0, H)
       g.addColorStop(0, "#20335c")
       g.addColorStop(1, "#0a0f1c")
       x.fillStyle = g
       x.fillRect(0, 0, W, H)
-      // clock
+      // live clock + date
+      const now = new Date()
+      const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
       x.fillStyle = "#fff"
       x.textAlign = "center"
-      x.font = "600 140px -apple-system, 'Helvetica Neue', Arial, sans-serif"
-      x.fillText("9:41", W / 2, 190)
+      x.font = "600 128px -apple-system, 'Helvetica Neue', Arial, sans-serif"
+      x.fillText(time, W / 2, 195)
       x.fillStyle = "#dde5f3"
-      x.font = "400 42px -apple-system, Arial, sans-serif"
-      x.fillText("Saturday, July 18", W / 2, 255)
+      x.font = "400 40px -apple-system, Arial, sans-serif"
+      x.fillText(date, W / 2, 258)
       // notification card
       const n = notifs[i % notifs.length]
       const cx = 44
@@ -240,14 +250,12 @@ function usePhoneScreen() {
       x.fillStyle = "rgba(255,255,255,0.94)"
       rr(cx, cy, cw, ch, 40)
       x.fill()
-      // icon tile
       x.fillStyle = "#eef2f8"
       rr(cx + 30, cy + 40, 96, 96, 22)
       x.fill()
       x.font = "58px sans-serif"
       x.textAlign = "center"
       x.fillText(n.icon, cx + 30 + 48, cy + 40 + 66)
-      // text
       x.textAlign = "left"
       x.fillStyle = "#111"
       x.font = "700 42px -apple-system, Arial, sans-serif"
@@ -269,16 +277,38 @@ function usePhoneScreen() {
       x.textAlign = "right"
       x.font = "30px -apple-system, Arial, sans-serif"
       x.fillText("now", cx + cw - 30, cy + 60)
-      // hint
-      x.textAlign = "center"
-      x.fillStyle = "rgba(255,255,255,0.5)"
-      x.font = "34px -apple-system, Arial, sans-serif"
-      x.fillText("tap for more", W / 2, H - 80)
       tex.needsUpdate = true
     }
-    draw()
-    return { texture: tex, next: () => { i = (i + 1) % notifs.length; draw() } }
+    draw(false, 0)
+    return { tex, notifs, draw }
   }, [])
+
+  const idx = useRef(0)
+  useEffect(() => {
+    const timers = new Set<ReturnType<typeof setTimeout>>()
+    const at = (fn: () => void, ms: number) => {
+      const id = setTimeout(() => {
+        timers.delete(id)
+        fn()
+      }, ms)
+      timers.add(id)
+    }
+    const loop = () => {
+      idx.current = (idx.current + 1) % data.notifs.length
+      data.draw(true, idx.current)
+      at(() => data.draw(false, idx.current), 4000) // screen sleeps after 4s
+      at(loop, 4000 + 5000 + Math.random() * 5000) // next flash 5–10s later
+    }
+    data.draw(false, 0)
+    at(loop, 2500)
+    return () => timers.forEach(clearTimeout)
+  }, [data])
+
+  const tap = () => {
+    idx.current = (idx.current + 1) % data.notifs.length
+    data.draw(true, idx.current)
+  }
+  return { texture: data.tex, tap }
 }
 
 // Camera keyframes: top-down on the desk → eye-level looking at the open laptop.
@@ -424,7 +454,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       quip(pickLine(PLANT_LINES))
     }
   }
-  const onPhone = () => phoneScreen.next()
+  const onPhone = () => phoneScreen.tap()
   const onMac = () => {
     quip(pickLine(MAC_LINES))
     const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
@@ -550,12 +580,27 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
           Tap the screen to cycle notifications. */}
       <group position={PHONE_POS} rotation={PHONE_ROT}>
         <primitive object={phone} />
-        <Interactive position={PHONE_SCREEN_OFFSET} onClick={onPhone}>
-          <mesh>
-            <planeGeometry args={PHONE_SCREEN} />
-            <meshBasicMaterial map={phoneScreen.texture} toneMapped={false} side={THREE.DoubleSide} />
-          </mesh>
-        </Interactive>
+        {/* Black backing hides the model's own light screen. */}
+        <mesh position={[PHONE_SCREEN_OFFSET[0], PHONE_SCREEN_OFFSET[1], PHONE_SCREEN_OFFSET[2] - 0.01]}>
+          <planeGeometry args={[PHONE_SCREEN[0] + 0.05, PHONE_SCREEN[1] + 0.05]} />
+          <meshBasicMaterial color="#000000" toneMapped={false} />
+        </mesh>
+        {/* Lock-screen (tap to advance; also auto-flashes). No zoom. */}
+        <mesh
+          position={PHONE_SCREEN_OFFSET}
+          onClick={(e) => {
+            e.stopPropagation()
+            onPhone()
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation()
+            document.body.style.cursor = "pointer"
+          }}
+          onPointerOut={() => (document.body.style.cursor = "")}
+        >
+          <planeGeometry args={PHONE_SCREEN} />
+          <meshBasicMaterial map={phoneScreen.texture} toneMapped={false} side={THREE.DoubleSide} />
+        </mesh>
       </group>
 
       {/* The lamp is the light switch: click anywhere on it to toggle the room light. */}
