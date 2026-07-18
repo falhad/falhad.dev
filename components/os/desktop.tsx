@@ -143,7 +143,7 @@ export default function Desktop() {
       }}
     >
       {/* ===== Menubar ===== */}
-      <div className="absolute inset-x-0 top-0 z-[200] flex items-center justify-between border-b border-white/5 bg-black/30 px-4 py-1.5 text-xs text-foreground/80 backdrop-blur-md">
+      <div className="absolute inset-x-0 top-0 z-[200] flex items-center justify-between border-b border-white/10 bg-white/[0.06] px-4 py-1.5 text-xs text-foreground/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl">
         <div className="flex items-center gap-4">
           <span></span>
           <span className="font-semibold">{topApp ? topApp.title.split(" — ")[1] ?? topApp.title : "Finder"}</span>
@@ -228,7 +228,7 @@ export default function Desktop() {
         <div
           onPointerMove={(e) => setMx(e.clientX)}
           onPointerLeave={() => setMx(null)}
-          className="flex items-end gap-1.5 rounded-2xl border border-white/15 bg-white/[0.08] p-2 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)] backdrop-blur-xl"
+          className="flex items-end gap-1.5 rounded-[26px] border border-white/20 bg-white/[0.1] p-2.5 shadow-[0_24px_70px_-20px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.3)] backdrop-blur-2xl"
         >
           {APPS.map((a) => (
             <DockIcon

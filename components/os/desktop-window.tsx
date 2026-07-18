@@ -58,10 +58,10 @@ export default function DesktopWindow({
   return (
     <div
       className={cn(
-        "absolute flex max-h-[78vh] flex-col overflow-hidden rounded-xl border bg-[#1c1a17]/95 backdrop-blur-xl transition-shadow",
+        "absolute flex max-h-[80vh] flex-col overflow-hidden rounded-[22px] border backdrop-blur-2xl transition-shadow",
         focused
-          ? "border-white/15 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95)]"
-          : "border-white/8 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)]",
+          ? "border-white/20 bg-[#17140f]/55 shadow-[0_50px_140px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.22)]"
+          : "border-white/10 bg-[#17140f]/45 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)]",
       )}
       style={{
         left: x,
@@ -75,9 +75,15 @@ export default function DesktopWindow({
       }}
       onPointerDown={() => onFocus(id)}
     >
+      {/* Liquid-glass sheen */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-[22px] bg-gradient-to-b from-white/[0.08] via-transparent to-transparent"
+      />
+
       {/* Title bar (drag handle) */}
       <div
-        className="flex shrink-0 cursor-grab items-center gap-3 border-b border-white/10 bg-white/[0.04] px-4 py-2.5 active:cursor-grabbing"
+        className="relative flex shrink-0 cursor-grab items-center gap-3 border-b border-white/[0.08] bg-white/[0.06] px-4 py-2.5 active:cursor-grabbing"
         onPointerDown={onBarDown}
         onPointerMove={onBarMove}
         onPointerUp={onBarUp}
@@ -104,7 +110,7 @@ export default function DesktopWindow({
       </div>
 
       {/* Body — data-lenis-prevent lets it scroll natively despite smooth scroll */}
-      <div data-lenis-prevent className="min-h-0 flex-1 overflow-auto overscroll-contain">
+      <div data-lenis-prevent className="relative min-h-0 flex-1 overflow-auto overscroll-contain">
         {children}
       </div>
     </div>
