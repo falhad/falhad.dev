@@ -22,7 +22,24 @@ export default function Desktop() {
   const [wins, setWins] = useState<Win[]>([])
   const [mobileApp, setMobileApp] = useState<string | null>(null)
   const [hint, setHint] = useState(true)
+  const [reveal, setReveal] = useState(0)
   const zTop = useRef(10)
+
+  // The desktop "turns on" over the black screen as the push-in completes.
+  useEffect(() => {
+    const onScroll = () => {
+      const hero = document.getElementById("hero")
+      if (!hero) return
+      const r = hero.getBoundingClientRect()
+      const range = r.height - window.innerHeight
+      const p = range > 0 ? Math.min(1, Math.max(0, -r.top / range)) : 0
+      const t = Math.min(1, Math.max(0, (p - 0.88) / 0.12))
+      setReveal(t * t * (3 - 2 * t))
+    }
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
 
   const open = (id: string) => {
     setHint(false)
@@ -52,8 +69,12 @@ export default function Desktop() {
     <section
       id="desktop"
       aria-label="Desktop"
-      className="relative min-h-screen overflow-hidden"
-      style={{ background: "radial-gradient(120% 90% at 60% 0%, #241d16, #100b07 70%)" }}
+      className="fixed inset-0 z-[60] overflow-hidden"
+      style={{
+        background: "radial-gradient(120% 90% at 60% 0%, #241d16, #100b07 70%)",
+        opacity: reveal,
+        pointerEvents: reveal > 0.9 ? "auto" : "none",
+      }}
     >
       {/* ===== Menubar ===== */}
       <div className="absolute inset-x-0 top-0 z-[200] flex items-center justify-between border-b border-white/5 bg-black/30 px-4 py-1.5 text-xs text-foreground/80 backdrop-blur-md">

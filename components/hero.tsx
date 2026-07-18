@@ -58,11 +58,18 @@ export default function Hero() {
               <div className="pointer-events-auto mt-6">
                 <Magnetic>
                   <a
-                    href="#work"
-                    data-cursor="view work"
+                    href="#"
+                    data-cursor="enter"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
+                      const to = document.documentElement.scrollHeight
+                      if (l) l.scrollTo(to, { duration: 2.4 })
+                      else window.scrollTo({ top: to, behavior: "smooth" })
+                    }}
                     className="inline-flex items-center gap-2 rounded-full bg-[#ece5d8] px-7 py-3 text-[#1a1512] transition-colors hover:bg-[var(--terracotta)] hover:text-white"
                   >
-                    Selected work
+                    Enter workspace ↓
                   </a>
                 </Magnetic>
               </div>
