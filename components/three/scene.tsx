@@ -472,24 +472,39 @@ function Lights({ lampOn }: { lampOn: boolean }) {
   const spot = useRef<THREE.SpotLight>(null)
   const hemi = useRef<THREE.HemisphereLight>(null)
   const fill = useRef<THREE.DirectionalLight>(null)
+  const moon = useRef<THREE.SpotLight>(null)
   const lvl = useRef(lampOn ? 1 : 0)
   useFrame((_state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
     lvl.current += ((lampOn ? 1 : 0) - lvl.current) * (1 - Math.pow(0.004, dt))
     const l = lvl.current
-    // Keep a faint moonlit floor so the lamp is findable in the dark (no glow);
-    // lamp-on lifts a soft room-wide fill on top.
-    if (amb.current) amb.current.intensity = 0.11 + 0.86 * l
-    if (hemi.current) hemi.current.intensity = 0.14 + 1.0 * l
-    if (fill.current) fill.current.intensity = 0.08 + 0.62 * l
+    // Dark: almost no global fill — only the moon cone reveals the lamp/laptop/mug.
+    // Lit: warm room-wide fill on top.
+    if (amb.current) amb.current.intensity = 0.02 + 0.95 * l
+    if (hemi.current) hemi.current.intensity = 0.02 + 1.05 * l
+    if (fill.current) fill.current.intensity = 0.72 * l
     if (spot.current) spot.current.intensity = 58 * l
+    if (moon.current) moon.current.intensity = 7 * (1 - l)
   })
   return (
     <>
-      <ambientLight ref={amb} intensity={0.03} color="#8a7f6e" />
-      {/* Soft room bounce so lamp-on reads as a lit room, not just a spotlight. */}
-      <hemisphereLight ref={hemi} intensity={0} color="#fff2dc" groundColor="#2a221a" />
-      <directionalLight ref={fill} position={[-4, 6, 4]} intensity={0} color="#ffe9c8" />
+      {/* Warmer ambient/fill so lamp-on feels cozy, not clinical. */}
+      <ambientLight ref={amb} intensity={0.02} color="#d19a5c" />
+      <hemisphereLight ref={hemi} intensity={0} color="#ffe7bd" groundColor="#2a1f14" />
+      <directionalLight ref={fill} position={[-4, 6, 4]} intensity={0} color="#ffdca0" />
+      {/* Faint cool "moonlight" cone aimed at the laptop — grazes the lamp, laptop
+          and mug so those read in the dark while the rest stays black. Fades out
+          as the lamp turns on. */}
+      <spotLight
+        ref={moon}
+        position={[1.4, 5, 1.6]}
+        angle={0.62}
+        penumbra={1}
+        intensity={0}
+        distance={16}
+        decay={2}
+        color="#8ea6c6"
+      />
       <spotLight
         ref={spot}
         position={[2.5, 1.75, 0.2]}
@@ -498,7 +513,7 @@ function Lights({ lampOn }: { lampOn: boolean }) {
         intensity={0}
         distance={18}
         decay={2}
-        color="#ffd9a0"
+        color="#ffce8a"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0002}
