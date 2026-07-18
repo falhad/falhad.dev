@@ -422,7 +422,7 @@ const PHONE_SCREEN: [number, number] = [0.675, 1.455] // matches the model's dis
 // Local offset (in the phone's own space) placing the screen just above its face.
 const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
 const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
-const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
+const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
@@ -512,7 +512,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const desk = useAnchored(DESK, 8.5, "top")
   const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
   const flower = useAnchored(FLOWER, 0.72, "bottom")
-  const lamp = useAnchored(LAMP, 3.9, "bottom", "max")
+  const lamp = useAnchored(LAMP, 3.5, "bottom", "max")
   const phone = useAnchored(PHONE, 1.5, "bottom", "max")
   const phoneScreen = usePhoneScreen()
   // Blacken the phone's emissive (glowing white) display so our lock-screen
