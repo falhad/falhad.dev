@@ -286,11 +286,9 @@ function Interactive({
   )
 }
 
-function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () => void }) {
+function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const laptop = useRef<THREE.Group>(null)
   const nameMat = useRef<THREE.MeshBasicMaterial>(null)
-  const glowMat = useRef<THREE.MeshBasicMaterial>(null)
-  const glowLight = useRef<THREE.PointLight>(null)
   const { pointer } = useThree()
   const px = useRef(0)
   const py = useRef(0)
@@ -399,12 +397,6 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
         if (m) (m.material as THREE.MeshBasicMaterial).opacity = 0
       })
     }
-
-    // Pulsing "press me" glow on the lamp knob — only while the light is off.
-    const off = lampOn ? 0 : 1
-    const pulse = 0.5 + 0.5 * Math.sin(state.clock.elapsedTime * 3.2)
-    if (glowMat.current) glowMat.current.opacity = off * (0.3 + 0.55 * pulse)
-    if (glowLight.current) glowLight.current.intensity = off * (1.4 + 2.6 * pulse)
   })
 
   return (
@@ -458,8 +450,7 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
         <primitive object={flower} />
       </Interactive>
 
-      {/* The lamp is the light switch: click anywhere on it (or its glowing knob
-          cue) to toggle the room light. */}
+      {/* The lamp is the light switch: click anywhere on it to toggle the room light. */}
       <group
         onClick={(e) => {
           e.stopPropagation()
@@ -469,11 +460,6 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
         onPointerOut={() => (document.body.style.cursor = "")}
       >
         <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
-        <mesh position={[3.02, 1.7, -0.92]}>
-          <sphereGeometry args={[0.07, 16, 16]} />
-          <meshBasicMaterial ref={glowMat} color="#ffdca0" transparent opacity={0} toneMapped={false} />
-        </mesh>
-        <pointLight ref={glowLight} position={[3.02, 1.7, -0.92]} color="#ffdca0" intensity={0} distance={4} decay={2} />
       </group>
     </group>
   )
@@ -547,7 +533,7 @@ export default function Scene({ lampOn = true, onToggleLamp = () => {} }: { lamp
         {/* Lamp-driven room lighting (dark until the switch is clicked). */}
         <Lights lampOn={lampOn} />
         <Suspense fallback={null}>
-          <Sequence lampOn={lampOn} onToggleLamp={onToggleLamp} />
+          <Sequence onToggleLamp={onToggleLamp} />
           {/* The environment HDR is the room's ambient fill — kill it entirely
               when the lamp is off so the room actually goes dark. */}
           {lampOn ? <Environment preset="apartment" environmentIntensity={0.7} /> : null}
