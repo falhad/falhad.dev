@@ -544,26 +544,22 @@ function HoverMove({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
-  lift = 0.06,
   children,
 }: {
   position?: [number, number, number]
   rotation?: [number, number, number]
   scale?: number
-  lift?: number
   children: React.ReactNode
 }) {
   const ref = useRef<THREE.Group>(null)
   const hovered = useRef(false)
-  const baseY = position[1]
   const baseRz = rotation[2] ?? 0
   useFrame((s, dtRaw) => {
     const g = ref.current
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
-    const ty = baseY + (hovered.current ? lift : 0)
-    g.position.y += (ty - g.position.y) * (1 - Math.pow(0.003, dt))
-    const rz = baseRz + (hovered.current ? Math.sin(s.clock.elapsedTime * 9) * 0.04 : 0)
+    // wobble in place (no lift)
+    const rz = baseRz + (hovered.current ? Math.sin(s.clock.elapsedTime * 9) * 0.05 : 0)
     g.rotation.z += (rz - g.rotation.z) * (1 - Math.pow(0.01, dt))
   })
   return (
