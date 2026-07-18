@@ -13,9 +13,7 @@ const DESK = "/models/computer_desk.glb" // user-supplied
 const NOTEBOOK = "/models/notebook_and_pen.glb" // user-supplied
 const FLOWER = "/models/small_flower._polycam_app.glb" // user-supplied
 const LAMP = "/models/desk_lamp.glb" // user-supplied
-const DUCK = "/models/rubber_duck.glb" // CC0 (Khronos sample duck)
-const PHONE = "/models/phone.glb" // CC0 (Quaternius)
-const BOOKS = "/models/books.glb" // CC0 (poly.pizza)
+const PHONE = "/models/phone.glb" // user-supplied (iPhone)
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
 const SCREEN_MESH = "Object_123" // the emissive display (lid) — recolored black so the name panel blends
 
@@ -212,12 +210,8 @@ const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
 const STICKY_POS: [number, number, number] = [0.05, 0.19, 0]
 const STICKY_ROT: [number, number, number] = [-Math.PI / 2, 0, 0.25]
 const STICKY_SIZE = 0.5
-const DUCK_POS: [number, number, number] = [1.55, 0, 1.9]
-const DUCK_ROT: [number, number, number] = [0, -0.6, 0]
-const PHONE_POS: [number, number, number] = [-1.35, 0.02, 2.25]
-const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, 0.5] // lay flat on the desk
-const BOOKS_POS: [number, number, number] = [-1.3, 0, -1.5]
-const BOOKS_ROT: [number, number, number] = [0, 0.6, 0]
+const PHONE_POS: [number, number, number] = [2.35, 0.02, 2.2] // near the coffee mug
+const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, -0.35] // lay flat on the desk
 const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
 const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
@@ -246,18 +240,6 @@ const MAC_LINES = [
   "*knock knock* …I open when you scroll ↓",
   "Locked for now — scroll down and watch me open ↓",
   "Patience. I unfold as you scroll ↓",
-]
-const DUCK_LINES = [
-  "🦆 Quack. Now explain your bug to me, line by line.",
-  "Rubber-duck debugging: undefeated since forever.",
-  "The duck has reviewed your code. The duck has notes.",
-  "Quack means 'have you tried turning it off and on again?'",
-]
-const BOOK_LINES = [
-  "📚 On the stack: Designing Data-Intensive Applications.",
-  "Clean Code, DDD, and a coffee-stained copy of the Rust book.",
-  "The Pragmatic Programmer — re-read yearly, still humbling.",
-  "Currently reading: whatever prevents the next 3am incident.",
 ]
 const PHONE_LINES = [
   "📱 Recruiter: 'Are you available?' …read 14:32. (building this instead)",
@@ -328,9 +310,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
   const flower = useAnchored(FLOWER, 0.72, "bottom")
   const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
-  const duck = useAnchored(DUCK, 0.85, "bottom", "max")
-  const phone = useAnchored(PHONE, 0.9, "bottom")
-  const books = useAnchored(BOOKS, 1.1, "bottom")
+  const phone = useAnchored(PHONE, 1.5, "bottom", "max")
   const nameTex = useNameTexture()
   const stickyTex = useStickyTexture()
 
@@ -358,8 +338,6 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       quip(pickLine(PLANT_LINES))
     }
   }
-  const onDuck = () => quip(pickLine(DUCK_LINES))
-  const onBook = () => quip(pickLine(BOOK_LINES))
   const onPhone = () => quip(pickLine(PHONE_LINES))
   const onMac = () => {
     quip(pickLine(MAC_LINES))
@@ -482,14 +460,8 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       <Interactive position={FLOWER_POS} onClick={onPlant}>
         <primitive object={flower} />
       </Interactive>
-      <Interactive position={DUCK_POS} rotation={DUCK_ROT} onClick={onDuck}>
-        <primitive object={duck} />
-      </Interactive>
       <Interactive position={PHONE_POS} rotation={PHONE_ROT} onClick={onPhone}>
         <primitive object={phone} />
-      </Interactive>
-      <Interactive position={BOOKS_POS} rotation={BOOKS_ROT} onClick={onBook}>
-        <primitive object={books} />
       </Interactive>
 
       {/* The lamp is the light switch: click anywhere on it to toggle the room light. */}
@@ -570,9 +542,7 @@ useGLTF.preload(DESK)
 useGLTF.preload(NOTEBOOK)
 useGLTF.preload(FLOWER)
 useGLTF.preload(LAMP)
-useGLTF.preload(DUCK)
 useGLTF.preload(PHONE)
-useGLTF.preload(BOOKS)
 
 export default function Scene({ lampOn = true, onToggleLamp = () => {} }: { lampOn?: boolean; onToggleLamp?: () => void }) {
   const reduced = useReducedMotion()
