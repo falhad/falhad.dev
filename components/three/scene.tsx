@@ -444,10 +444,10 @@ const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, PHONE_TWIST] // la
 const PHONE_SCREEN: [number, number] = [0.675, 1.455] // matches the model's display area
 // Local offset (in the phone's own space) placing the screen just above its face.
 const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
-const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
+const FLOWER_POS: [number, number, number] = [-3.35, 0, -0.9]
 const MINIONS_POS: [number, number, number] = [-2.05, 0, -1.75]
 const MINIONS_ROT: [number, number, number] = [0, 0.55, 0]
-const MINIONS_SCALE = 0.32
+const MINIONS_SCALE = 0.384
 const RUBIK_POS: [number, number, number] = [1.15, 0, 2.0]
 const RUBIK_ROT: [number, number, number] = [0, 0.4, 0]
 const DRONE_POS: [number, number, number] = [1.55, 0.05, -1.35]
@@ -529,32 +529,56 @@ function Interactive({
   )
 }
 
-// Drone parked left of the lamp — hover to spin up and lift off a little.
+// Drone parked left of the lamp — hover to take off. It keeps flying (and
+// drifting) for a few seconds after the pointer leaves, then lands.
 function Drone() {
   const { scene, animations } = useGLTF(DRONE)
   const model = useMemo(() => cloneSkinned(scene), [scene])
   const group = useRef<THREE.Group>(null)
   const { actions } = useAnimations(animations, group)
-  const hovered = useRef(false)
+  const flying = useRef(false)
   const lift = useRef(0)
-  const start = () => {
-    hovered.current = true
+  const landTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const takeOff = () => {
+    if (landTimer.current) {
+      clearTimeout(landTimer.current)
+      landTimer.current = null
+    }
     document.body.style.cursor = "pointer"
-    const a = actions["hover"]
-    if (a) a.reset().fadeIn(0.25).play()
+    if (!flying.current) {
+      flying.current = true
+      actions["hover"]?.reset().fadeIn(0.3).play()
+    }
   }
-  const end = () => {
-    hovered.current = false
+  const scheduleLand = () => {
     document.body.style.cursor = ""
-    actions["hover"]?.fadeOut(0.5)
+    if (landTimer.current) clearTimeout(landTimer.current)
+    // keep flying a while, then land
+    landTimer.current = setTimeout(() => {
+      flying.current = false
+      actions["hover"]?.fadeOut(0.8)
+      landTimer.current = null
+    }, 4000)
   }
+  useEffect(() => () => {
+    if (landTimer.current) clearTimeout(landTimer.current)
+  }, [])
+
   useFrame((state, dtRaw) => {
     const g = group.current
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
-    lift.current += ((hovered.current ? 1 : 0) - lift.current) * (1 - Math.pow(0.008, dt))
-    const bob = hovered.current ? Math.sin(state.clock.elapsedTime * 3.2) * 0.04 : 0
-    g.position.set(DRONE_POS[0], DRONE_POS[1] + lift.current * 0.8 + bob, DRONE_POS[2])
+    lift.current += ((flying.current ? 1 : 0) - lift.current) * (1 - Math.pow(0.01, dt))
+    const l = lift.current
+    const t = state.clock.elapsedTime
+    // rise, bob, and drift around while airborne
+    g.position.set(
+      DRONE_POS[0] + Math.sin(t * 0.8) * 0.35 * l,
+      DRONE_POS[1] + l * 0.9 + Math.sin(t * 3.2) * 0.05 * l,
+      DRONE_POS[2] + Math.cos(t * 0.6) * 0.25 * l,
+    )
+    g.rotation.y = DRONE_ROT[1] + Math.sin(t * 0.5) * 0.3 * l
   })
   return (
     <group
@@ -564,9 +588,9 @@ function Drone() {
       scale={DRONE_SCALE}
       onPointerOver={(e) => {
         e.stopPropagation()
-        start()
+        takeOff()
       }}
-      onPointerOut={end}
+      onPointerOut={scheduleLand}
     >
       <primitive object={model} />
     </group>
@@ -592,7 +616,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   // Rigged model — bbox auto-fit misreads skinned meshes, so load raw + scale manually.
   const minionsGltf = useGLTF(MINIONS)
   const minions = useMemo(() => cloneSkinned(minionsGltf.scene), [minionsGltf])
-  const rubik = useAnchored(RUBIK, 0.55, "bottom")
+  const rubik = useAnchored(RUBIK, 0.38, "bottom")
   const phoneScreen = usePhoneScreen()
   // Blacken the phone's emissive (glowing white) display so our lock-screen
   // content sits on a real black screen instead of looking like a floating layer.
