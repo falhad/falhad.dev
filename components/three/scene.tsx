@@ -458,10 +458,11 @@ const DRONE_SCALE = 0.6
 // returns along the same path. Open spline, traversed ping-pong.
 const DRONE_ROUTE: [number, number, number][] = [
   [2.15, 0.12, -1.6], // home (parked on desk)
-  [2.05, 2.0, -2.2], // push back and up
-  [0.7, 2.35, -2.6], // arc across the back (right)
-  [-1.3, 2.35, -2.6], // arc across the back (left)
-  [-2.9, 2.05, -2.2], // finish the half-circle over the back-left
+  [2.0, 2.0, -2.2], // push back and up
+  [-0.5, 2.25, -2.55], // cross the back, high behind the lid
+  [-2.5, 1.45, -1.75], // descend over the minions
+  [-3.35, 1.35, -0.9], // over the plant
+  [-3.0, 1.35, 1.35], // over the notebook (front-left)
 ]
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
