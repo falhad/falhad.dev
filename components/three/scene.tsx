@@ -445,7 +445,7 @@ const PHONE_SCREEN: [number, number] = [0.675, 1.455] // matches the model's dis
 // Local offset (in the phone's own space) placing the screen just above its face.
 const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
 const FLOWER_POS: [number, number, number] = [-3.35, 0, -0.9]
-const MINIONS_POS: [number, number, number] = [-2.05, 0, -1.75]
+const MINIONS_POS: [number, number, number] = [-2.5, 0, -1.75]
 const MINIONS_ROT: [number, number, number] = [0, 0, 0]
 const MINIONS_SCALE = 0.48
 const RUBIK_POS: [number, number, number] = [1.15, 0, 2.0]
@@ -453,13 +453,15 @@ const RUBIK_ROT: [number, number, number] = [0, 0.4, 0]
 const DRONE_SCALE = 0.6
 // Flight route (closed loop): home → over the minions → over the plant → sweep
 // back → home. Home (index 0) is low on the desk so it lands there.
+// Kept entirely in the back strip (z ≤ ~-1.1) so it stays behind the raised
+// laptop lid and never collides with the open monitor.
 const DRONE_ROUTE: [number, number, number][] = [
   [2.15, 0.12, -1.6], // home (parked on desk)
-  [0.6, 2.1, -2.05], // rise, cross behind the laptop
-  [-2.0, 2.15, -1.75], // over the minions
-  [-3.2, 1.95, -0.9], // over the plant
-  [-1.2, 2.2, 0.5], // sweep across the front
-  [1.9, 2.05, -0.7], // bank back toward home
+  [1.3, 1.35, -1.95], // rise, back-right
+  [-0.5, 1.5, -2.05], // cross the back (behind the lid)
+  [-2.5, 1.4, -1.8], // over the minions
+  [-3.2, 1.25, -1.15], // over the plant
+  [-0.9, 1.45, -1.95], // bank back along the rear
 ]
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
