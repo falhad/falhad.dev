@@ -128,8 +128,8 @@ export default function RetroIntro() {
         <div className="retro-scan" aria-hidden />
         <div className="retro-page">
           <h1 className="retro-title">
-            <span className="retro-blink">✦</span> Farhad&apos;s Homepage{" "}
-            <span className="retro-blink">✦</span>
+            <span className="retro-star">✦</span> Farhad&apos;s Homepage{" "}
+            <span className="retro-star">✦</span>
           </h1>
           <div className="retro-construction">🚧 UNDER CONSTRUCTION SINCE 2011 🚧</div>
 
@@ -161,15 +161,19 @@ export default function RetroIntro() {
               </table>
 
               <p className="retro-hint">Psst… it&apos;s not really 2011.</p>
-              <button
-                type="button"
-                className="retro-enter"
-                onClick={enter}
-                data-cursor="enter"
-              >
-                <span className="retro-blink">▶</span> CLICK TO FAST-FORWARD TO 2026{" "}
-                <span className="retro-blink">⏩</span>
-              </button>
+              <div className="retro-enterwrap">
+                <span className="retro-point retro-point-l" aria-hidden>👉</span>
+                <button
+                  type="button"
+                  className="retro-enter"
+                  onClick={enter}
+                  data-cursor="enter"
+                >
+                  <span className="retro-blink">▶</span> CLICK TO FAST-FORWARD TO 2026{" "}
+                  <span className="retro-blink">⏩</span>
+                </button>
+                <span className="retro-point retro-point-r" aria-hidden>👈</span>
+              </div>
               <p className="retro-copy">© 2011 Farhad · made with Notepad</p>
             </>
           ) : (
@@ -250,6 +254,15 @@ const RETRO_CSS = `
 #retro .retro-blink { animation: retro-blink 1s steps(1) infinite; }
 @keyframes retro-blink { 50% { opacity: 0; } }
 
+/* Two big arrows flanking the fast-forward button so it can't be missed. */
+#retro .retro-enterwrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
+#retro .retro-point { font-size: 30px; line-height: 1; flex: none; filter: drop-shadow(0 1px 0 rgba(0,0,0,.4)); }
+#retro .retro-point-l { animation: retro-point-l 0.7s ease-in-out infinite; }
+#retro .retro-point-r { animation: retro-point-r 0.7s ease-in-out infinite; }
+@keyframes retro-point-l { 0%,100% { transform: translateX(0); } 50% { transform: translateX(7px); } }
+@keyframes retro-point-r { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-7px); } }
+@media (max-width: 420px) { #retro .retro-point { font-size: 22px; } }
+
 #retro .retro-dialup { padding: 14px 6px 20px; }
 #retro .retro-term {
   text-align: left; background: #000; color: #0f0; font-family: "Courier New", monospace;
@@ -272,6 +285,7 @@ const RETRO_CSS = `
 }
 @media (prefers-reduced-motion: reduce) {
   #retro .retro-off, #retro .retro-poweron, #retro .retro-progfill,
-  #retro .retro-blink, #retro .retro-blink-slow { animation: none; }
+  #retro .retro-blink, #retro .retro-blink-slow,
+  #retro .retro-point-l, #retro .retro-point-r { animation: none; }
 }
 `

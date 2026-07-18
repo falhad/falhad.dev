@@ -17,6 +17,16 @@ const DARK_LINES = [
   "It's darker than my coffee in here. Tap the desk lamp so we can see the desk?",
   "I may have coded with the lights off again… be a hero and click the lamp?",
   "Error 404: photons not found. Please press the desk lamp to continue.",
+  "It's giving 'production incident at 2am' energy. Lamp, please?",
+  "I can hear you squinting. The desk lamp is right there 👀",
+  "Dark mode is great for apps, less great for entire rooms. Lamp?",
+  "My retinas filed a ticket. Severity: high. Fix: click the lamp.",
+  "We could do this the hard way, or you could just tap the lamp.",
+  "Somewhere in this darkness is a beautiful 3D desk. Lamp reveals it.",
+  "I'm not scared of the dark. I just can't render it. Lamp on?",
+  "Loading… photons at 0%. Tap the desk lamp to install light.",
+  "Feels like a horror game in here. Flip the lamp before the jump-scare.",
+  "The lamp isn't just décor — it's the light switch. Give it a click 💡",
 ]
 const OFF_LINES = [
   "Hey! Who turned off the lights? I was working here!",
@@ -24,6 +34,16 @@ const OFF_LINES = [
   "Great, now I have to code by vibes again.",
   "Lights off? Bold move. My eyes thank you and also hate you.",
   "You know the lamp is decorative *and* functional, right? …fine, spooky mode it is.",
+  "Cool cool cool. Debugging blindfolded. Love that for me.",
+  "And there goes the ambiance. Very 'unpaid intern basement'.",
+  "Off again? My circadian rhythm is filing a complaint.",
+  "You flipped it just to see what I'd say, didn't you.",
+  "Fine. Ninja mode. I'll deploy from the shadows. 🥷",
+  "The desk misses you already. So does the photon.",
+  "Achievement unlocked: Left Farhad in the Dark.",
+  "This is exactly how legacy code gets written, you know.",
+  "Lights out. I guess we're 'moody senior dev' now.",
+  "That's the third time. I'm starting to take it personally.",
 ]
 const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)]
 
@@ -119,7 +139,20 @@ export default function Hero() {
       >
         <Scene lampOn={lampOn} onToggleLamp={toggleLamp} />
 
-        <h1 className="sr-only">{profile.name}</h1>
+        {/* The hero is a WebGL canvas with no machine-readable text, so this
+            accessible block gives screen readers, search engines and LLMs the
+            real page heading and a concise, keyword-natural intro. */}
+        <header className="sr-only">
+          <h1>Farhad Navayazdan — Senior Software Developer &amp; Software Engineer in Muscat, Oman</h1>
+          <p>
+            Farhad Navayazdan (falhad) is a senior software developer and software engineer based in
+            Muscat, Oman, with 14+ years of experience. He builds AI and LLM software — including RAG
+            (retrieval-augmented generation) systems and AI agents — alongside real-time monitoring
+            platforms, blockchain applications, and full-stack web and mobile products using Rust,
+            Next.js, Kotlin, Python and Spring Boot. Available for senior software engineering and AI
+            development work in Oman and remotely worldwide.
+          </p>
+        </header>
 
         {dialog ? <LampDialog text={dialog.text} canClose={dialog.canClose} /> : null}
 
