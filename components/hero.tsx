@@ -28,6 +28,7 @@ const OFF_LINES = [
 ]
 const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)]
 
+
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -136,11 +137,7 @@ export default function Hero() {
           {/* Minimal overlay — light-on-dark for the dim room. */}
           <div className="pointer-events-none absolute inset-x-0 bottom-14 px-6 md:px-12">
             <div className="mx-auto max-w-6xl">
-              <p className="mb-3 text-[0.72rem] font-medium uppercase tracking-[0.22em] text-[#9a8f7d]">
-                {profile.location} · 14 years
-              </p>
-              <p className="max-w-md text-lg leading-relaxed text-[#d8cfc2]">{profile.tagline}</p>
-              <div className="pointer-events-auto mt-6">
+              <div className="pointer-events-auto">
                 <Magnetic>
                   <a
                     href="#"

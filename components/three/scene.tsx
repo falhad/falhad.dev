@@ -635,9 +635,9 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
     steamSprites.current.forEach((s, i) => {
       if (!s) return
       const ph = ((et * 0.2 + i / Math.max(N, 1)) % 1 + 1) % 1
-      s.position.y = ph * 1.25
-      s.position.x = Math.sin(ph * 4 + i * 1.7) * 0.16 * ph
-      s.position.z = Math.cos(ph * 3 + i * 2.1) * 0.11 * ph
+      s.position.y = ph * 0.55
+      s.position.x = Math.sin(ph * 4 + i * 1.7) * 0.1 * ph
+      s.position.z = Math.cos(ph * 3 + i * 2.1) * 0.07 * ph
       const sc = 0.1 + ph * 0.32
       s.scale.set(sc, sc * 1.4, sc)
       ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.05
