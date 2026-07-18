@@ -420,7 +420,7 @@ const PHONE_TWIST = -0.35
 const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, PHONE_TWIST] // lay flat on the desk
 const PHONE_SCREEN: [number, number] = [0.66, 1.52]
 // Local offset (in the phone's own space) placing the screen just above its face.
-const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.07]
+const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.09]
 const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
 const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
@@ -515,6 +515,22 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
   const phone = useAnchored(PHONE, 1.5, "bottom", "max")
   const phoneScreen = usePhoneScreen()
+  // Blacken the phone's emissive (glowing white) display so our lock-screen
+  // content sits on a real black screen instead of looking like a floating layer.
+  useMemo(() => {
+    phone.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (!m.isMesh) return
+      const mat = m.material as THREE.MeshStandardMaterial
+      if (mat?.emissive && mat.emissive.r + mat.emissive.g + mat.emissive.b > 1.2) {
+        const b = mat.clone()
+        b.emissive.setRGB(0, 0, 0)
+        b.emissiveIntensity = 0
+        b.color.setRGB(0, 0, 0)
+        m.material = b
+      }
+    })
+  }, [phone])
   const nameTex = useNameTexture()
   const stickyTex = useStickyTexture()
 
@@ -668,12 +684,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
           Tap the screen to cycle notifications. */}
       <group position={PHONE_POS} rotation={PHONE_ROT}>
         <primitive object={phone} />
-        {/* Black backing hides the model's own light screen. */}
-        <mesh position={[PHONE_SCREEN_OFFSET[0], PHONE_SCREEN_OFFSET[1], PHONE_SCREEN_OFFSET[2] - 0.01]}>
-          <planeGeometry args={[PHONE_SCREEN[0] + 0.05, PHONE_SCREEN[1] + 0.05]} />
-          <meshBasicMaterial color="#000000" toneMapped={false} />
-        </mesh>
-        {/* Lock-screen (tap to advance; also auto-flashes). No zoom. */}
+        {/* Lock-screen content, laid flush on the (now black) glass. Tap to advance; also auto-flashes. */}
         <mesh
           position={PHONE_SCREEN_OFFSET}
           onClick={(e) => {
