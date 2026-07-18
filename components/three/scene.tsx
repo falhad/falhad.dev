@@ -241,32 +241,27 @@ const MAC_LINES = [
 const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)]
 const quip = (text: string) => window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
 
-// A clickable desk object: gentle lift on hover, a little pop on click.
+// A clickable desk object: pointer cursor on hover + a small pop on click.
+// No hover lift — objects stay planted on the desk.
 function Interactive({
   position = [0, 0, 0],
   rotation,
-  bob = 0.09,
   onClick,
   children,
 }: {
   position?: [number, number, number]
   rotation?: [number, number, number]
-  bob?: number
   onClick: () => void
   children: React.ReactNode
 }) {
   const ref = useRef<THREE.Group>(null)
-  const hovered = useRef(false)
   const punch = useRef(0)
-  const baseY = position[1]
   useFrame((_s, dtRaw) => {
     const g = ref.current
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
-    const ty = baseY + (hovered.current ? bob : 0)
-    g.position.y += (ty - g.position.y) * (1 - Math.pow(0.002, dt))
     punch.current += (0 - punch.current) * (1 - Math.pow(0.02, dt))
-    g.scale.setScalar(1 + 0.16 * punch.current)
+    g.scale.setScalar(1 + 0.1 * punch.current)
   })
   return (
     <group
@@ -275,11 +270,9 @@ function Interactive({
       rotation={rotation}
       onPointerOver={(e) => {
         e.stopPropagation()
-        hovered.current = true
         document.body.style.cursor = "pointer"
       }}
       onPointerOut={() => {
-        hovered.current = false
         document.body.style.cursor = ""
       }}
       onClick={(e) => {
@@ -512,7 +505,7 @@ function Lights({ lampOn }: { lampOn: boolean }) {
       <directionalLight ref={fill} position={[-4, 6, 4]} intensity={0} color="#ffe9c8" />
       <spotLight
         ref={spot}
-        position={[2.5, 1.95, -0.5]}
+        position={[2.5, 1.75, 0.2]}
         angle={0.95}
         penumbra={0.85}
         intensity={0}

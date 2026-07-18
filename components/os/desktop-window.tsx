@@ -39,6 +39,28 @@ export default function DesktopWindow({
   const [max, setMax] = useState(false)
   const stop = (e: React.PointerEvent) => e.stopPropagation() // keep drag off the buttons
 
+  // Resize: track width/height locally; height stays auto until first resize.
+  const winRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState<{ w: number; h: number | null }>({ w: width, h: null })
+  const resize = useRef<{ sx: number; sy: number; sw: number; sh: number; dir: string } | null>(null)
+  const onResizeDown = (dir: string) => (e: React.PointerEvent) => {
+    e.stopPropagation()
+    onFocus(id)
+    resize.current = { sx: e.clientX, sy: e.clientY, sw: size.w, sh: winRef.current?.offsetHeight ?? 400, dir }
+    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+  }
+  const onResizeMove = (e: React.PointerEvent) => {
+    if (!resize.current) return
+    const { sx, sy, sw, sh, dir } = resize.current
+    setSize((s) => ({
+      w: dir.includes("e") ? Math.max(340, Math.min(sw + (e.clientX - sx), window.innerWidth - 24)) : s.w,
+      h: dir.includes("s") ? Math.max(240, Math.min(sh + (e.clientY - sy), window.innerHeight - 96)) : s.h,
+    }))
+  }
+  const onResizeUp = () => {
+    resize.current = null
+  }
+
   // Genie-ish open: grow up from the dock (bottom), settle with a spring.
   useEffect(() => {
     const r = requestAnimationFrame(() => setOpen(true))
@@ -65,6 +87,7 @@ export default function DesktopWindow({
 
   return (
     <div
+      ref={winRef}
       className={cn(
         "absolute flex max-h-[80vh] flex-col overflow-hidden rounded-[22px] border backdrop-blur-2xl transition-shadow",
         focused
@@ -74,7 +97,13 @@ export default function DesktopWindow({
       style={{
         ...(max
           ? { left: 12, top: 44, width: "calc(100vw - 24px)", height: "calc(100vh - 128px)", maxHeight: "none" as const }
-          : { left: x, top: y, width }),
+          : {
+              left: x,
+              top: y,
+              width: size.w,
+              height: size.h ?? undefined,
+              maxHeight: size.h != null ? ("none" as const) : undefined,
+            }),
         zIndex: z,
         transformOrigin: "center bottom",
         transform: closing
@@ -134,6 +163,33 @@ export default function DesktopWindow({
       <div data-lenis-prevent className="relative min-h-0 flex-1 overflow-auto overscroll-contain">
         {children}
       </div>
+
+      {/* Resize handles (hidden when maximized) */}
+      {!max ? (
+        <>
+          <div
+            onPointerDown={onResizeDown("e")}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeUp}
+            className="absolute right-0 top-10 z-20 h-[calc(100%-2.5rem)] w-2 cursor-ew-resize"
+            style={{ touchAction: "none" }}
+          />
+          <div
+            onPointerDown={onResizeDown("s")}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeUp}
+            className="absolute bottom-0 left-0 z-20 h-2 w-full cursor-ns-resize"
+            style={{ touchAction: "none" }}
+          />
+          <div
+            onPointerDown={onResizeDown("se")}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeUp}
+            className="absolute bottom-0 right-0 z-30 h-4 w-4 cursor-nwse-resize"
+            style={{ touchAction: "none" }}
+          />
+        </>
+      ) : null}
     </div>
   )
 }
