@@ -53,6 +53,31 @@
   .font-display {
     font-family: var(--font-display), var(--font-sans), sans-serif;
   }
+  /* macOS-style overlay scrollbar for the desktop app windows */
+  .mac-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  }
+  .mac-scroll::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  .mac-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .mac-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  .mac-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+    background-clip: content-box;
+  }
+  .mac-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+  }
   /* Reveal masks — a line of text starts hidden below its own box. */
   .reveal-line { display: block; overflow: hidden; }
   .reveal-line > * { display: block; will-change: transform; }

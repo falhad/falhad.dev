@@ -160,7 +160,7 @@ export default function DesktopWindow({
       </div>
 
       {/* Body — data-lenis-prevent lets it scroll natively despite smooth scroll */}
-      <div data-lenis-prevent className="relative min-h-0 flex-1 overflow-auto overscroll-contain">
+      <div data-lenis-prevent className="mac-scroll relative min-h-0 flex-1 overflow-auto overscroll-contain">
         {children}
       </div>
 

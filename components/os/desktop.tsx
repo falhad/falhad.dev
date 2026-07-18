@@ -320,7 +320,7 @@ export default function Desktop() {
             <span className="text-sm font-medium text-foreground/80">{mobileDef.title.split(" — ")[0]}</span>
             <span className="w-12" />
           </div>
-          <div data-lenis-prevent className="min-h-0 flex-1 overflow-auto">
+          <div data-lenis-prevent className="mac-scroll min-h-0 flex-1 overflow-auto">
             <mobileDef.Body />
           </div>
         </div>
@@ -333,7 +333,7 @@ export default function Desktop() {
             <span className="truncate text-sm font-medium text-foreground/80">{previewFile.name}</span>
             <a href={previewFile.src} download className="text-sm text-[var(--terracotta)]">↓</a>
           </div>
-          <div data-lenis-prevent className="min-h-0 flex-1 overflow-auto">
+          <div data-lenis-prevent className="mac-scroll min-h-0 flex-1 overflow-auto">
             <PreviewBody name={previewFile.name} src={previewFile.src} />
           </div>
         </div>
