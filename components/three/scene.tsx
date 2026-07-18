@@ -450,7 +450,7 @@ const MINIONS_ROT: [number, number, number] = [0, 0.55, 0]
 const MINIONS_SCALE = 0.384
 const RUBIK_POS: [number, number, number] = [1.15, 0, 2.0]
 const RUBIK_ROT: [number, number, number] = [0, 0.4, 0]
-const DRONE_POS: [number, number, number] = [1.55, 0.05, -1.35]
+const DRONE_POS: [number, number, number] = [2.15, 0.05, -1.6]
 const DRONE_ROT: [number, number, number] = [0, -0.5, 0]
 const DRONE_SCALE = 0.6
 const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
@@ -572,11 +572,12 @@ function Drone() {
     lift.current += ((flying.current ? 1 : 0) - lift.current) * (1 - Math.pow(0.01, dt))
     const l = lift.current
     const t = state.clock.elapsedTime
-    // rise, bob, and drift around while airborne
+    // rise, bob, and drift a little while airborne — kept in the back-right
+    // corner so it never flies over/through the laptop.
     g.position.set(
-      DRONE_POS[0] + Math.sin(t * 0.8) * 0.35 * l,
+      DRONE_POS[0] + Math.sin(t * 0.8) * 0.22 * l,
       DRONE_POS[1] + l * 0.9 + Math.sin(t * 3.2) * 0.05 * l,
-      DRONE_POS[2] + Math.cos(t * 0.6) * 0.25 * l,
+      DRONE_POS[2] + Math.cos(t * 0.6) * 0.18 * l,
     )
     g.rotation.y = DRONE_ROT[1] + Math.sin(t * 0.5) * 0.3 * l
   })
