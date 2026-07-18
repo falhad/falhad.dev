@@ -2,6 +2,7 @@ import SmoothScrollProvider from "@/components/scroll/smooth-scroll-provider"
 import Cursor from "@/components/motion/cursor"
 import Hero from "@/components/hero"
 import Desktop from "@/components/os/desktop"
+import RetroIntro from "@/components/retro/retro-intro"
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
         <Hero />
         <Desktop />
       </main>
+      <RetroIntro />
     </SmoothScrollProvider>
   )
 }

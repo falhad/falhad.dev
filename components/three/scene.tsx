@@ -84,7 +84,11 @@ function useMacBook(size: number) {
         const mat = m.material as THREE.MeshStandardMaterial
         if (mat?.isMeshStandardMaterial && mat.metalness > 0.3) {
           const soft = mat.clone()
-          soft.roughness = Math.min(1, soft.roughness + 0.35)
+          // Dial the aluminium way down so the lamp reads as a soft sheen,
+          // not a blown-out hotspot on the lid.
+          soft.roughness = Math.min(1, soft.roughness + 0.6)
+          soft.metalness = Math.min(soft.metalness, 0.5)
+          soft.envMapIntensity = 0.5
           m.material = soft
         }
       }
@@ -135,6 +139,60 @@ function useNameTexture() {
   }, [])
 }
 
+// A little yellow sticky note with a handwritten TODO — drawn to a canvas
+// texture and laid on the desk beside the notebook.
+function useStickyTexture() {
+  return useMemo(() => {
+    const S = 900
+    const c = document.createElement("canvas")
+    c.width = S
+    c.height = S
+    const x = c.getContext("2d")!
+    x.fillStyle = "#fde26b"
+    x.fillRect(0, 0, S, S)
+    // faint shading toward one corner, like a real sticky
+    const g = x.createLinearGradient(0, 0, S, S)
+    g.addColorStop(0, "rgba(255,255,255,0.25)")
+    g.addColorStop(1, "rgba(0,0,0,0.06)")
+    x.fillStyle = g
+    x.fillRect(0, 0, S, S)
+    x.fillStyle = "#2b2410"
+    x.textBaseline = "middle"
+    x.textAlign = "center"
+    x.font = `700 92px "Comic Sans MS", "Marker Felt", "Chalkboard SE", cursive`
+    x.fillText("Farhad's TODO", S / 2, 95)
+    const items: [string, boolean][] = [
+      ["Learn Rust (again)", true],
+      ["Ship falhad.dev", true],
+      ["Sleep", false],
+      ["Drink coffee", true],
+      ["Water Steve", false],
+      ["Escape the 2000s", false],
+    ]
+    x.textAlign = "left"
+    x.font = `600 58px "Comic Sans MS", "Marker Felt", "Chalkboard SE", cursive`
+    let y = 230
+    for (const [t, done] of items) {
+      x.fillStyle = "#2b2410"
+      x.fillText(done ? "☑" : "☐", 70, y)
+      x.fillText(t, 165, y)
+      if (done) {
+        x.strokeStyle = "#2b2410"
+        x.lineWidth = 4
+        x.beginPath()
+        x.moveTo(165, y + 6)
+        x.lineTo(165 + x.measureText(t).width, y + 6)
+        x.stroke()
+      }
+      y += 112
+    }
+    const tex = new THREE.CanvasTexture(c)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.anisotropy = 8
+    return tex
+  }, [])
+}
+
 // Camera keyframes: top-down on the desk → eye-level looking at the open laptop.
 const CAM_TOP = new THREE.Vector3(0, 8.0, 2.6)
 const CAM_EYE = new THREE.Vector3(0, 1.7, 7.4)
@@ -147,16 +205,99 @@ const LID_CLOSED = 1.78 // radians; model default (0) is open
 const MUG_POS: [number, number, number] = [3.0, 0, 0.75]
 const NOTEBOOK_POS: [number, number, number] = [-2.95, 0, 1.35]
 const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
-const FLOWER_POS: [number, number, number] = [-2.0, 0, -1.65]
+// Sticky note pose — local to the notebook group, resting on the cover.
+const STICKY_POS: [number, number, number] = [0.05, 0.19, 0]
+const STICKY_ROT: [number, number, number] = [-Math.PI / 2, 0, 0.25]
+const STICKY_SIZE = 0.5
+const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
 const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
 const SCREEN_SIZE: [number, number] = [2.46, 1.56]
 
-function Sequence() {
+// ---- Desk object personalities ----
+const MUG_LINES = [
+  "☕ Ah, fuel. This is what 14 years of shipping runs on.",
+  "Sip. Okay, now the code will compile.",
+  "Careful, it's hot — like my take on tabs vs spaces.",
+  "One more cup and I'll refactor the whole universe.",
+  "Espresso: because 'sleep' is a deprecated API.",
+]
+const MUG_EMPTY = "Empty. ☹️ Someone alert the barista."
+const PLANT_LINES = [
+  "🌵 Meet Steve. Watered twice in 2 years. Still thriving.",
+  "Steve doesn't judge your code. Steve just vibes.",
+  "Photosynthesis and clean commits — Steve does both.",
+  "Steve has survived more deploys than most startups.",
+  "Petting a cactus? Bold move. Respect.",
+]
+const PLANT_GROW_LINE = "🌱 → 🌳 STEVE GREW! You unlocked premium horticulture."
+const MAC_LINES = [
+  "*knock knock* …I open when you scroll ↓",
+  "Locked for now — scroll down and watch me open ↓",
+  "Patience. I unfold as you scroll ↓",
+]
+const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)]
+const quip = (text: string) => window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
+
+// A clickable desk object: gentle lift on hover, a little pop on click.
+function Interactive({
+  position = [0, 0, 0],
+  rotation,
+  bob = 0.09,
+  onClick,
+  children,
+}: {
+  position?: [number, number, number]
+  rotation?: [number, number, number]
+  bob?: number
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  const ref = useRef<THREE.Group>(null)
+  const hovered = useRef(false)
+  const punch = useRef(0)
+  const baseY = position[1]
+  useFrame((_s, dtRaw) => {
+    const g = ref.current
+    if (!g) return
+    const dt = Math.min(dtRaw, 0.05)
+    const ty = baseY + (hovered.current ? bob : 0)
+    g.position.y += (ty - g.position.y) * (1 - Math.pow(0.002, dt))
+    punch.current += (0 - punch.current) * (1 - Math.pow(0.02, dt))
+    g.scale.setScalar(1 + 0.16 * punch.current)
+  })
+  return (
+    <group
+      ref={ref}
+      position={position}
+      rotation={rotation}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        hovered.current = true
+        document.body.style.cursor = "pointer"
+      }}
+      onPointerOut={() => {
+        hovered.current = false
+        document.body.style.cursor = ""
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        punch.current = 1
+        onClick()
+      }}
+    >
+      {children}
+    </group>
+  )
+}
+
+function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () => void }) {
   const laptop = useRef<THREE.Group>(null)
   const nameMat = useRef<THREE.MeshBasicMaterial>(null)
+  const glowMat = useRef<THREE.MeshBasicMaterial>(null)
+  const glowLight = useRef<THREE.PointLight>(null)
   const { pointer } = useThree()
   const px = useRef(0)
   const py = useRef(0)
@@ -170,6 +311,39 @@ function Sequence() {
   const flower = useAnchored(FLOWER, 0.72, "bottom")
   const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
   const nameTex = useNameTexture()
+  const stickyTex = useStickyTexture()
+
+  // Desk object state (kept in refs so clicks don't re-render the scene).
+  const steamRefs = useRef<THREE.Mesh[]>([])
+  const steamT = useRef(0)
+  const sips = useRef(8)
+  const plantClicks = useRef(0)
+  const plantGrow = useRef(1)
+  const plantGrowTarget = useRef(1)
+  const flowerBase = useRef(0)
+
+  const onMug = () => {
+    steamT.current = 0.001
+    sips.current -= 1
+    quip(sips.current <= 0 ? MUG_EMPTY : pickLine(MUG_LINES))
+    if (sips.current < 0) sips.current = 0
+  }
+  const onPlant = () => {
+    plantClicks.current += 1
+    if (plantClicks.current === 5) {
+      plantGrowTarget.current = 1.6
+      quip(PLANT_GROW_LINE)
+    } else {
+      quip(pickLine(PLANT_LINES))
+    }
+  }
+  const onMac = () => {
+    quip(pickLine(MAC_LINES))
+    const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
+    const to = window.scrollY + window.innerHeight * 0.6
+    if (l) l.scrollTo(to, { duration: 1.2 })
+    else window.scrollTo({ top: to, behavior: "smooth" })
+  }
 
   useFrame((state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
@@ -208,23 +382,148 @@ function Sequence() {
       const fadeOut = smooth(invlerp(p, 0.82, 0.95))
       nameMat.current.opacity = fadeIn * (1 - fadeOut)
     }
+
+    // Steve the plant slowly grows to his new size after the 5th poke.
+    if (!flowerBase.current) flowerBase.current = flower.scale.x
+    plantGrow.current += (plantGrowTarget.current - plantGrow.current) * (1 - Math.pow(0.01, dt))
+    flower.scale.setScalar(flowerBase.current * plantGrow.current)
+
+    // Coffee steam puff — one rising, fading plume per sip.
+    if (steamT.current > 0) {
+      steamT.current += dt / 1.5
+      if (steamT.current >= 1) steamT.current = 0
+      const tt = steamT.current
+      steamRefs.current.forEach((m, i) => {
+        if (!m) return
+        const ph = (tt + i * 0.33) % 1
+        m.position.y = ph * 0.8
+        m.position.x = Math.sin(ph * 6 + i) * 0.06
+        m.scale.setScalar(0.6 + ph * 0.9)
+        ;(m.material as THREE.MeshBasicMaterial).opacity = Math.sin(ph * Math.PI) * 0.5
+      })
+    } else {
+      steamRefs.current.forEach((m) => {
+        if (m) (m.material as THREE.MeshBasicMaterial).opacity = 0
+      })
+    }
+
+    // Pulsing "press me" glow on the lamp knob — only while the light is off.
+    const off = lampOn ? 0 : 1
+    const pulse = 0.5 + 0.5 * Math.sin(state.clock.elapsedTime * 3.2)
+    if (glowMat.current) glowMat.current.opacity = off * (0.3 + 0.55 * pulse)
+    if (glowLight.current) glowLight.current.intensity = off * (1.4 + 2.6 * pulse)
   })
 
   return (
     <group>
       <primitive object={desk} position={[0, 0, 0]} />
-      <group ref={laptop} position={[0, 0, 0]}>
+      <group
+        ref={laptop}
+        position={[0, 0, 0]}
+        onClick={(e) => {
+          e.stopPropagation()
+          onMac()
+        }}
+        onPointerOver={() => (document.body.style.cursor = "pointer")}
+        onPointerOut={() => (document.body.style.cursor = "")}
+      >
         <primitive object={macbook} />
         <mesh position={SCREEN_POS} rotation={SCREEN_ROT}>
           <planeGeometry args={SCREEN_SIZE} />
           <meshBasicMaterial ref={nameMat} map={nameTex} transparent opacity={0} toneMapped={false} />
         </mesh>
       </group>
-      <primitive object={mug} position={MUG_POS} />
-      <primitive object={notebook} position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT} />
-      <primitive object={flower} position={FLOWER_POS} />
-      <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
+
+      <Interactive position={MUG_POS} onClick={onMug}>
+        <primitive object={mug} />
+      </Interactive>
+      {/* Steam puffs above the mug (animated on sip). */}
+      <group position={[MUG_POS[0], 0.55, MUG_POS[2]]}>
+        {[0, 1, 2].map((i) => (
+          <mesh
+            key={i}
+            ref={(el) => {
+              if (el) steamRefs.current[i] = el
+            }}
+          >
+            <sphereGeometry args={[0.07, 10, 10]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0} depthWrite={false} toneMapped={false} />
+          </mesh>
+        ))}
+      </group>
+
+      <group position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT}>
+        <primitive object={notebook} />
+        {/* Small sticky note resting on top of the notebook cover. Uses a lit
+            material so it goes dark with the room instead of glowing. */}
+        <mesh position={STICKY_POS} rotation={STICKY_ROT}>
+          <planeGeometry args={[STICKY_SIZE, STICKY_SIZE]} />
+          <meshStandardMaterial map={stickyTex} roughness={0.95} metalness={0} />
+        </mesh>
+      </group>
+      <Interactive position={FLOWER_POS} onClick={onPlant}>
+        <primitive object={flower} />
+      </Interactive>
+
+      {/* The lamp is the light switch: click anywhere on it (or its glowing knob
+          cue) to toggle the room light. */}
+      <group
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleLamp()
+        }}
+        onPointerOver={() => (document.body.style.cursor = "pointer")}
+        onPointerOut={() => (document.body.style.cursor = "")}
+      >
+        <primitive object={lamp} position={LAMP_POS} rotation={LAMP_ROT} />
+        <mesh position={[3.02, 1.7, -0.92]}>
+          <sphereGeometry args={[0.07, 16, 16]} />
+          <meshBasicMaterial ref={glowMat} color="#ffdca0" transparent opacity={0} toneMapped={false} />
+        </mesh>
+        <pointLight ref={glowLight} position={[3.02, 1.7, -0.92]} color="#ffdca0" intensity={0} distance={4} decay={2} />
+      </group>
     </group>
+  )
+}
+
+// Room lighting driven by the lamp switch — eases between dark and lit so the
+// light "warms up" instead of snapping on.
+function Lights({ lampOn }: { lampOn: boolean }) {
+  const amb = useRef<THREE.AmbientLight>(null)
+  const spot = useRef<THREE.SpotLight>(null)
+  const hemi = useRef<THREE.HemisphereLight>(null)
+  const fill = useRef<THREE.DirectionalLight>(null)
+  const lvl = useRef(lampOn ? 1 : 0)
+  useFrame((_state, dtRaw) => {
+    const dt = Math.min(dtRaw, 0.05)
+    lvl.current += ((lampOn ? 1 : 0) - lvl.current) * (1 - Math.pow(0.004, dt))
+    const l = lvl.current
+    // Dark floor stays tiny; lamp-on lifts a soft room-wide fill on top.
+    if (amb.current) amb.current.intensity = 0.02 + 0.95 * l
+    if (hemi.current) hemi.current.intensity = 1.15 * l
+    if (fill.current) fill.current.intensity = 0.7 * l
+    if (spot.current) spot.current.intensity = 58 * l
+  })
+  return (
+    <>
+      <ambientLight ref={amb} intensity={0.03} color="#8a7f6e" />
+      {/* Soft room bounce so lamp-on reads as a lit room, not just a spotlight. */}
+      <hemisphereLight ref={hemi} intensity={0} color="#fff2dc" groundColor="#2a221a" />
+      <directionalLight ref={fill} position={[-4, 6, 4]} intensity={0} color="#ffe9c8" />
+      <spotLight
+        ref={spot}
+        position={[2.5, 1.95, -0.5]}
+        angle={0.95}
+        penumbra={0.85}
+        intensity={0}
+        distance={18}
+        decay={2}
+        color="#ffd9a0"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0002}
+      />
+    </>
   )
 }
 
@@ -235,7 +534,7 @@ useGLTF.preload(NOTEBOOK)
 useGLTF.preload(FLOWER)
 useGLTF.preload(LAMP)
 
-export default function Scene() {
+export default function Scene({ lampOn = true, onToggleLamp = () => {} }: { lampOn?: boolean; onToggleLamp?: () => void }) {
   const reduced = useReducedMotion()
   if (reduced) {
     return (
@@ -252,26 +551,13 @@ export default function Scene() {
   return (
     <div className="absolute inset-0" aria-hidden>
       <Canvas shadows camera={{ position: [0, 8.0, 2.6], fov: 42 }} dpr={[1, 1.9]} gl={{ antialias: true, alpha: true, toneMappingExposure: 0.78 }}>
-        {/* Dark room: only a faint cool ambient fills the shadows. */}
-        <ambientLight intensity={0.18} color="#4a4640" />
-        {/* The desk lamp is the key light — placed just under the lamp head and
-            aimed down at the desk, so the light comes from beneath the head
-            (not glowing on the head itself). */}
-        <spotLight
-          position={[2.5, 1.95, -0.5]}
-          angle={0.95}
-          penumbra={0.85}
-          intensity={58}
-          distance={18}
-          decay={2}
-          color="#ffd9a0"
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-bias={-0.0002}
-        />
+        {/* Lamp-driven room lighting (dark until the switch is clicked). */}
+        <Lights lampOn={lampOn} />
         <Suspense fallback={null}>
-          <Sequence />
-          <Environment preset="apartment" environmentIntensity={0.32} />
+          <Sequence lampOn={lampOn} onToggleLamp={onToggleLamp} />
+          {/* The environment HDR is the room's ambient fill — kill it entirely
+              when the lamp is off so the room actually goes dark. */}
+          {lampOn ? <Environment preset="apartment" environmentIntensity={0.7} /> : null}
         </Suspense>
         <EffectComposer>
           <Bloom intensity={0.1} luminanceThreshold={0.92} luminanceSmoothing={0.9} mipmapBlur />

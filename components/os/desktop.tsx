@@ -79,6 +79,34 @@ function StatusIcons() {
   )
 }
 
+/* Preview app body — shows an image (or PDF) with a download bar, like macOS Preview */
+function PreviewBody({ name, src }: { name: string; src: string }) {
+  const isPdf = src.toLowerCase().endsWith(".pdf")
+  return (
+    <div className="flex min-h-full flex-col">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-[#17140f]/80 px-4 py-2 backdrop-blur-xl">
+        <span className="truncate text-xs text-foreground/70">{name}</span>
+        <a
+          href={src}
+          download
+          data-cursor="download"
+          className="shrink-0 rounded-md border border-white/15 bg-white/[0.06] px-2.5 py-1 text-xs text-foreground/85 transition-colors hover:bg-white/15 hover:text-white"
+        >
+          ↓ Download
+        </a>
+      </div>
+      <div className="min-h-0 flex-1 bg-[#0d0b09] p-3">
+        {isPdf ? (
+          <iframe src={src} title={name} className="h-[70vh] w-full rounded-md border border-white/10 bg-white" />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt={name} className="mx-auto max-w-full rounded-md shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]" />
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* Lock-screen login shown as the screen turns on */
 function BootScreen({ running }: { running: boolean }) {
   return (
@@ -102,6 +130,8 @@ function BootScreen({ running }: { running: boolean }) {
 export default function Desktop() {
   const [wins, setWins] = useState<Win[]>([])
   const [mobileApp, setMobileApp] = useState<string | null>(null)
+  const [previewFile, setPreviewFile] = useState<{ name: string; src: string } | null>(null)
+  const [mobilePreview, setMobilePreview] = useState(false)
   const [hint, setHint] = useState(true)
   const [reveal, setReveal] = useState(0)
   const [boot, setBoot] = useState<"idle" | "running" | "done">("idle")
@@ -123,16 +153,36 @@ export default function Desktop() {
       return [...ws, { id, x: 130 + n * 34, y: 84 + n * 30, z: ++zTop.current, min: false }]
     })
   }
-  const close = (id: string) => setWins((ws) => ws.filter((w) => w.id !== id))
+  const close = (id: string) => {
+    if (id === "preview") setPreviewFile(null)
+    setWins((ws) => ws.filter((w) => w.id !== id))
+  }
   const minimize = (id: string) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, min: true } : w)))
   const focus = (id: string) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, z: ++zTop.current } : w)))
   const move = (id: string, x: number, y: number) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, x, y } : w)))
+
+  // Finder files ask to open here via a window event, so any app body can
+  // trigger the Preview window without prop-drilling.
+  useEffect(() => {
+    const onPreview = (e: Event) => {
+      const d = (e as CustomEvent<{ name: string; src: string }>).detail
+      if (!d) return
+      setPreviewFile(d)
+      if (typeof window !== "undefined" && window.innerWidth < 768) setMobilePreview(true)
+      else open("preview")
+    }
+    window.addEventListener("open-preview", onPreview)
+    return () => window.removeEventListener("open-preview", onPreview)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Log out — reset the session and scroll back out to the hero desk. Scrolling
   // back down replays the login.
   const logout = () => {
     setWins([])
     setMobileApp(null)
+    setPreviewFile(null)
+    setMobilePreview(false)
     setHint(true)
     bootRef.current = "idle"
     setBoot("idle")
@@ -186,7 +236,7 @@ export default function Desktop() {
       <div className="absolute inset-x-0 top-0 z-[200] flex items-center justify-between border-b border-white/10 bg-white/[0.06] px-4 py-1.5 text-xs text-foreground/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl">
         <div className="flex items-center gap-4">
           <span></span>
-          <span className="font-semibold">{topApp ? topApp.title.split(" — ")[1] ?? topApp.title : "Finder"}</span>
+          <span className="font-semibold">{topId === "preview" ? "Preview" : topApp ? topApp.title.split(" — ")[1] ?? topApp.title : "Finder"}</span>
           <span className="hidden gap-4 text-muted-foreground md:flex">
             <span>File</span>
             <span>Edit</span>
@@ -216,24 +266,27 @@ export default function Desktop() {
         {wins
           .filter((w) => !w.min)
           .map((w) => {
-            const def = APPS.find((a) => a.id === w.id)!
-            const Body = def.Body
+            const isPreview = w.id === "preview"
+            const def = APPS.find((a) => a.id === w.id)
+            if (!isPreview && !def) return null
+            const title = isPreview ? `${previewFile?.name ?? "Preview"} — Preview` : def!.title
+            const width = isPreview ? 720 : def!.width
             return (
               <DesktopWindow
                 key={w.id}
                 id={w.id}
-                title={def.title}
+                title={title}
                 x={w.x}
                 y={w.y}
                 z={w.z}
-                width={def.width}
+                width={width}
                 focused={w.id === topId}
                 onFocus={focus}
                 onClose={close}
                 onMinimize={minimize}
                 onMove={move}
               >
-                <Body />
+                {isPreview && previewFile ? <PreviewBody name={previewFile.name} src={previewFile.src} /> : def ? <def.Body /> : null}
               </DesktopWindow>
             )
           })}
@@ -269,6 +322,19 @@ export default function Desktop() {
           </div>
           <div data-lenis-prevent className="min-h-0 flex-1 overflow-auto">
             <mobileDef.Body />
+          </div>
+        </div>
+      ) : null}
+
+      {mobilePreview && previewFile ? (
+        <div className="fixed inset-0 z-[320] flex flex-col bg-[#141110]/95 backdrop-blur-2xl md:hidden">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <button onClick={() => setMobilePreview(false)} className="text-sm text-[var(--terracotta)]">‹ Back</button>
+            <span className="truncate text-sm font-medium text-foreground/80">{previewFile.name}</span>
+            <a href={previewFile.src} download className="text-sm text-[var(--terracotta)]">↓</a>
+          </div>
+          <div data-lenis-prevent className="min-h-0 flex-1 overflow-auto">
+            <PreviewBody name={previewFile.name} src={previewFile.src} />
           </div>
         </div>
       ) : null}

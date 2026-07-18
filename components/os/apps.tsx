@@ -154,7 +154,30 @@ export function JourneyApp() {
 }
 
 /* ---------------- Awards & CV (Finder) ---------------- */
-type F = { icon: string; name: string; meta?: string; href?: string; download?: boolean }
+
+// The CV and certificates are the user's own scans, downloaded locally and
+// served from /files so they open inside the desktop's Preview app instead of
+// bouncing out to Google Drive. Map each original Drive share link to its
+// local copy by file id.
+const DRIVE_FILE: Record<string, string> = {
+  "1bmeJ-Hubz-ovqnJO4WK2s0GcQCj9-jT6": "/files/security-cert.jpg",
+  "1rufY3no366dEK4Qz5NE6OON3Bcq-mFAo": "/files/network-plus.jpg",
+  "1qBbgoK3mLUIJaAtlgyDnUewcWfdKFDuN": "/files/ccna.jpg",
+  "1jSktgIiziWVGC61ASTeCXP8LZSv1hXsq": "/files/ccnp.jpg",
+  "1bSQ8I86w1pzpaKg4VNvFagzKGQKC8dbX": "/files/mcitp.jpg",
+}
+function localFile(url?: string): string | undefined {
+  const id = url?.match(/\/d\/([A-Za-z0-9_-]+)/)?.[1]
+  return id ? DRIVE_FILE[id] : undefined
+}
+
+// Ask the desktop to open a file in the Preview window (see desktop.tsx).
+function openInPreview(name: string, src: string) {
+  window.dispatchEvent(new CustomEvent("open-preview", { detail: { name, src } }))
+}
+
+// src = a local file that opens in the Preview app; href = an external site.
+type F = { icon: string; name: string; meta?: string; src?: string; href?: string }
 function FileGrid({ files }: { files: F[] }) {
   return (
     <div className="grid grid-cols-3 gap-5 p-5 sm:grid-cols-4">
@@ -166,8 +189,13 @@ function FileGrid({ files }: { files: F[] }) {
             {f.meta ? <span className="max-w-[8rem] truncate text-center text-[0.6rem] text-muted-foreground">{f.meta}</span> : null}
           </>
         )
+        if (f.src) {
+          return (
+            <button key={f.name} onClick={() => openInPreview(f.name, f.src!)} data-cursor="open" className="group flex flex-col items-center">{inner}</button>
+          )
+        }
         return f.href ? (
-          <a key={f.name} href={f.href} target="_blank" rel="noopener noreferrer" data-cursor={f.download ? "download" : "open"} className="group flex flex-col items-center">{inner}</a>
+          <a key={f.name} href={f.href} target="_blank" rel="noopener noreferrer" data-cursor="open" className="group flex flex-col items-center">{inner}</a>
         ) : (
           <div key={f.name} className="group flex flex-col items-center">{inner}</div>
         )
@@ -176,9 +204,9 @@ function FileGrid({ files }: { files: F[] }) {
   )
 }
 export function FinderApp() {
-  const cv: F = { icon: "📄", name: "Farhad_CV.pdf", meta: "Résumé", href: profile.resume, download: true }
-  const certs: F[] = certifications.map((c) => ({ icon: "📜", name: `${c.name}.pdf`, meta: c.label, href: c.url }))
-  const aw: F[] = awards.map((a) => ({ icon: "🏆", name: a.title, meta: [a.description, a.years?.join(" / ")].filter(Boolean).join(" · ") || undefined, href: a.url }))
+  const cv: F = { icon: "📄", name: "Farhad Navayazdan — CV.pdf", meta: "Résumé", src: "/files/cv.pdf" }
+  const certs: F[] = certifications.map((c) => ({ icon: "📜", name: c.name, meta: c.label, src: localFile(c.url), href: c.url }))
+  const aw: F[] = awards.map((a) => ({ icon: "🏆", name: a.title, meta: [a.description, a.years?.join(" / ")].filter(Boolean).join(" · ") || undefined, src: localFile(a.url), href: a.url }))
   return (
     <div className="grid sm:grid-cols-[170px_1fr]">
       <aside className="hidden border-r border-white/10 bg-white/[0.02] p-3 text-sm sm:block">
