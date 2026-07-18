@@ -512,7 +512,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const desk = useAnchored(DESK, 8.5, "top")
   const notebook = useAnchored(NOTEBOOK, 1.7, "bottom")
   const flower = useAnchored(FLOWER, 0.72, "bottom")
-  const lamp = useAnchored(LAMP, 3.0, "bottom", "max")
+  const lamp = useAnchored(LAMP, 3.9, "bottom", "max")
   const phone = useAnchored(PHONE, 1.5, "bottom", "max")
   const phoneScreen = usePhoneScreen()
   // Blacken the phone's emissive (glowing white) display so our lock-screen
