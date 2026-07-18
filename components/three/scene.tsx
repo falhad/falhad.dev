@@ -399,6 +399,25 @@ function usePhoneScreen() {
   return { texture: data.tex, tap }
 }
 
+// Soft radial puff for wispy coffee steam.
+function useSteamTexture() {
+  return useMemo(() => {
+    const S = 128
+    const c = document.createElement("canvas")
+    c.width = S
+    c.height = S
+    const x = c.getContext("2d")!
+    const g = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2)
+    g.addColorStop(0, "rgba(255,255,255,0.85)")
+    g.addColorStop(0.45, "rgba(255,255,255,0.28)")
+    g.addColorStop(1, "rgba(255,255,255,0)")
+    x.fillStyle = g
+    x.fillRect(0, 0, S, S)
+    const t = new THREE.CanvasTexture(c)
+    return t
+  }, [])
+}
+
 // Camera keyframes: top-down on the desk → eye-level looking at the open laptop.
 const CAM_TOP = new THREE.Vector3(0, 8.0, 2.6)
 const CAM_EYE = new THREE.Vector3(0, 1.7, 7.4)
@@ -534,9 +553,10 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const nameTex = useNameTexture()
   const stickyTex = useStickyTexture()
 
+  const steamTex = useSteamTexture()
+
   // Desk object state (kept in refs so clicks don't re-render the scene).
-  const steamRefs = useRef<THREE.Mesh[]>([])
-  const steamT = useRef(0)
+  const steamSprites = useRef<THREE.Sprite[]>([])
   const sips = useRef(8)
   const plantClicks = useRef(0)
   const plantGrow = useRef(1)
@@ -544,7 +564,6 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
   const flowerBase = useRef(0)
 
   const onMug = () => {
-    steamT.current = 0.001
     sips.current -= 1
     quip(sips.current <= 0 ? MUG_EMPTY : pickLine(MUG_LINES))
     if (sips.current < 0) sips.current = 0
@@ -610,24 +629,19 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
     plantGrow.current += (plantGrowTarget.current - plantGrow.current) * (1 - Math.pow(0.01, dt))
     flower.scale.setScalar(flowerBase.current * plantGrow.current)
 
-    // Coffee steam puff — one rising, fading plume per sip.
-    if (steamT.current > 0) {
-      steamT.current += dt / 1.5
-      if (steamT.current >= 1) steamT.current = 0
-      const tt = steamT.current
-      steamRefs.current.forEach((m, i) => {
-        if (!m) return
-        const ph = (tt + i * 0.33) % 1
-        m.position.y = ph * 0.8
-        m.position.x = Math.sin(ph * 6 + i) * 0.06
-        m.scale.setScalar(0.6 + ph * 0.9)
-        ;(m.material as THREE.MeshBasicMaterial).opacity = Math.sin(ph * Math.PI) * 0.5
-      })
-    } else {
-      steamRefs.current.forEach((m) => {
-        if (m) (m.material as THREE.MeshBasicMaterial).opacity = 0
-      })
-    }
+    // Coffee steam — continuous wispy vapor rising, curling and dissipating.
+    const et = state.clock.elapsedTime
+    const N = steamSprites.current.length
+    steamSprites.current.forEach((s, i) => {
+      if (!s) return
+      const ph = ((et * 0.2 + i / Math.max(N, 1)) % 1 + 1) % 1
+      s.position.y = ph * 1.25
+      s.position.x = Math.sin(ph * 4 + i * 1.7) * 0.16 * ph
+      s.position.z = Math.cos(ph * 3 + i * 2.1) * 0.11 * ph
+      const sc = 0.16 + ph * 0.55
+      s.scale.set(sc, sc * 1.35, sc)
+      ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.28
+    })
   })
 
   return (
@@ -653,18 +667,17 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       <Interactive position={MUG_POS} onClick={onMug}>
         <primitive object={mug} />
       </Interactive>
-      {/* Steam puffs above the mug (animated on sip). */}
-      <group position={[MUG_POS[0], 0.55, MUG_POS[2]]}>
-        {[0, 1, 2].map((i) => (
-          <mesh
+      {/* Continuous wispy steam above the mug. */}
+      <group position={[MUG_POS[0], 0.5, MUG_POS[2]]}>
+        {Array.from({ length: 7 }).map((_, i) => (
+          <sprite
             key={i}
             ref={(el) => {
-              if (el) steamRefs.current[i] = el
+              if (el) steamSprites.current[i] = el as unknown as THREE.Sprite
             }}
           >
-            <sphereGeometry args={[0.07, 10, 10]} />
-            <meshBasicMaterial color="#ffffff" transparent opacity={0} depthWrite={false} toneMapped={false} />
-          </mesh>
+            <spriteMaterial map={steamTex} transparent opacity={0} depthWrite={false} toneMapped={false} />
+          </sprite>
         ))}
       </group>
 
@@ -682,7 +695,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       </Interactive>
       {/* Phone + its lock-screen overlay (child, so it tracks the phone exactly).
           Tap the screen to cycle notifications. */}
-      <group position={PHONE_POS} rotation={PHONE_ROT}>
+      <group position={PHONE_POS} rotation={PHONE_ROT} scale={0.8}>
         <primitive object={phone} />
         {/* Lock-screen content, laid flush on the (now black) glass. Tap to advance; also auto-flashes. */}
         <mesh
