@@ -49,24 +49,21 @@ export default function LampDialog({ text, canClose }: { text: string; canClose:
         </div>
       </div>
 
-      {/* Points to the lamp (top-right) while it's off. */}
+      {/* Soft glow over the lamp (top-right) while it's off — draws the eye. */}
       {!canClose ? (
-        <div className="pointer-events-none absolute right-[15%] top-[17%] z-40 flex flex-col items-center">
-          <span className="lampdlg-bounce text-4xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">👇</span>
-          <span className="relative mt-1 flex h-20 w-20 items-center justify-center">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full border-2 border-amber-200/70" />
-            <span className="inline-flex h-20 w-20 rounded-full border-2 border-amber-200/50" />
-          </span>
-        </div>
+        <div
+          className="lampdlg-glow pointer-events-none absolute right-[8%] top-[8%] z-40 h-52 w-52 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(255,214,150,0.30) 0%, rgba(255,214,150,0.10) 40%, rgba(255,214,150,0) 72%)" }}
+        />
       ) : null}
 
       <style>{`
         .lampdlg-blink { animation: lampdlg-blink 0.9s steps(1) infinite; display: inline-block; }
         .lampdlg-caret { animation: lampdlg-blink 0.7s steps(1) infinite; margin-left: 1px; }
-        .lampdlg-bounce { animation: lampdlg-bounce 1.1s ease-in-out infinite; }
+        .lampdlg-glow { animation: lampdlg-glow 2.4s ease-in-out infinite; }
         @keyframes lampdlg-blink { 50% { opacity: 0; } }
-        @keyframes lampdlg-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
-        @media (prefers-reduced-motion: reduce) { .lampdlg-blink, .lampdlg-caret, .lampdlg-bounce { animation: none; } }
+        @keyframes lampdlg-glow { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .lampdlg-blink, .lampdlg-caret, .lampdlg-glow { animation: none; } }
       `}</style>
     </>
   )
