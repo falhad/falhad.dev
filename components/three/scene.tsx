@@ -559,7 +559,7 @@ function HoverMove({
     if (!g) return
     const dt = Math.min(dtRaw, 0.05)
     // wobble in place (no lift)
-    const rz = baseRz + (hovered.current ? Math.sin(s.clock.elapsedTime * 9) * 0.05 : 0)
+    const rz = baseRz + (hovered.current ? Math.sin(s.clock.elapsedTime * 7) * 0.018 : 0)
     g.rotation.z += (rz - g.rotation.z) * (1 - Math.pow(0.01, dt))
   })
   return (
