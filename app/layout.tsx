@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next"
 import { Inter, Bricolage_Grotesque } from "next/font/google"
+import Script from "next/script"
 import "./globals.css"
 import type React from "react"
 import { Toaster } from "@/components/ui/toaster"
 import { profile, skills } from "@/lib/portfolio-data"
 import { PersonJsonLd } from "@/components/seo/json-ld"
+
+const GA_ID = "G-43M19ZHY3K"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display" })
@@ -87,6 +90,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PersonJsonLd />
         {children}
         <Toaster />
+        {/* Google Analytics 4 — loaded after the page is interactive so it never
+            competes with the WebGL scene for first paint. */}
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_ID}');`}
+        </Script>
       </body>
     </html>
   )
