@@ -198,8 +198,8 @@ function useStickyTexture() {
 // with a live clock + a rotating notification, and taps advance it too.
 function usePhoneScreen() {
   const data = useMemo(() => {
-    const W = 540
-    const H = 1160
+    const W = 560
+    const H = 1285
     const c = document.createElement("canvas")
     c.width = W
     c.height = H
@@ -208,75 +208,163 @@ function usePhoneScreen() {
     tex.colorSpace = THREE.SRGBColorSpace
     tex.anisotropy = 8
     const notifs = [
-      { icon: "💬", title: "Recruiter", msg: "Are you available? 👀" },
-      { icon: "⭐", title: "New star", msg: "Someone starred your repo" },
-      { icon: "✅", title: "Build passed", msg: "All green in 42s. Ship it." },
-      { icon: "💤", title: "3 unread", msg: "…all can wait." },
-      { icon: "☕", title: "Reminder", msg: "Refill coffee. Priority: critical." },
+      { icon: "💬", title: "Recruiter", msg: "Are you available? 👀", c1: "#34d058", c2: "#1c9e3e" },
+      { icon: "⭐", title: "GitHub", msg: "Someone starred your repo", c1: "#4b5563", c2: "#1f2937" },
+      { icon: "✅", title: "Build passed", msg: "All green in 42s. Ship it.", c1: "#34c759", c2: "#1e8e46" },
+      { icon: "💬", title: "Slack", msg: "3 unread — all can wait.", c1: "#8b5cf6", c2: "#5b21b6" },
+      { icon: "☕", title: "Reminder", msg: "Refill coffee. Priority: critical.", c1: "#c98a3e", c2: "#8a5a24" },
     ]
     const rr = (px: number, py: number, w: number, h: number, r: number) => {
       x.beginPath()
       x.roundRect(px, py, w, h, r)
     }
     const draw = (on: boolean, i: number) => {
+      x.clearRect(0, 0, W, H)
+      // rounded screen mask (so the corners match the glass)
+      x.save()
+      rr(0, 0, W, H, 78)
+      x.clip()
       if (!on) {
         x.fillStyle = "#000"
         x.fillRect(0, 0, W, H)
+        x.restore()
         tex.needsUpdate = true
         return
       }
+      // wallpaper: deep gradient + soft glow
       const g = x.createLinearGradient(0, 0, 0, H)
-      g.addColorStop(0, "#20335c")
-      g.addColorStop(1, "#0a0f1c")
+      g.addColorStop(0, "#161d33")
+      g.addColorStop(0.55, "#0c1120")
+      g.addColorStop(1, "#05070e")
       x.fillStyle = g
       x.fillRect(0, 0, W, H)
-      // live clock + date
+      const glow = x.createRadialGradient(W / 2, 220, 20, W / 2, 220, 460)
+      glow.addColorStop(0, "rgba(120,150,220,0.22)")
+      glow.addColorStop(1, "rgba(120,150,220,0)")
+      x.fillStyle = glow
+      x.fillRect(0, 0, W, H)
+
+      // status bar
+      x.fillStyle = "rgba(255,255,255,0.92)"
+      x.textAlign = "left"
+      x.font = "600 30px -apple-system, Arial, sans-serif"
+      x.fillText("Muscat", 44, 68)
+      // battery + wifi (right)
+      x.save()
+      x.translate(W - 54, 56)
+      x.strokeStyle = "rgba(255,255,255,0.85)"
+      x.fillStyle = "rgba(255,255,255,0.85)"
+      x.lineWidth = 3
+      rr(0, 0, 46, 22, 6)
+      x.stroke()
+      rr(3, 3, 34, 16, 3)
+      x.fill()
+      x.fillRect(48, 6, 4, 10)
+      // wifi fan
+      x.beginPath()
+      x.arc(-30, 18, 18, Math.PI * 1.25, Math.PI * 1.75)
+      x.stroke()
+      x.beginPath()
+      x.arc(-30, 18, 11, Math.PI * 1.25, Math.PI * 1.75)
+      x.stroke()
+      x.beginPath()
+      x.arc(-30, 18, 4, 0, Math.PI * 2)
+      x.fill()
+      x.restore()
+
+      // date + clock
       const now = new Date()
       const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
       const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
+      x.textAlign = "center"
+      x.fillStyle = "rgba(255,255,255,0.72)"
+      x.font = "500 40px -apple-system, Arial, sans-serif"
+      x.fillText(date, W / 2, 210)
       x.fillStyle = "#fff"
-      x.textAlign = "center"
-      x.font = "600 128px -apple-system, 'Helvetica Neue', Arial, sans-serif"
-      x.fillText(time, W / 2, 195)
-      x.fillStyle = "#dde5f3"
-      x.font = "400 40px -apple-system, Arial, sans-serif"
-      x.fillText(date, W / 2, 258)
-      // notification card
+      x.font = "300 138px -apple-system, 'Helvetica Neue', Arial, sans-serif"
+      x.fillText(time, W / 2, 336)
+
+      // stacked card peeking behind (depth)
+      const cx = 40
+      const cw = W - 80
+      x.fillStyle = "rgba(255,255,255,0.28)"
+      rr(cx + 22, 470, cw - 44, 210, 42)
+      x.fill()
+
+      // main notification card (frosted light)
+      const cy = 500
+      const ch = 224
+      x.save()
+      x.shadowColor = "rgba(0,0,0,0.35)"
+      x.shadowBlur = 34
+      x.shadowOffsetY = 14
+      x.fillStyle = "rgba(250,250,252,0.96)"
+      rr(cx, cy, cw, ch, 46)
+      x.fill()
+      x.restore()
+
       const n = notifs[i % notifs.length]
-      const cx = 44
-      const cy = 360
-      const cw = W - 88
-      const ch = 220
-      x.fillStyle = "rgba(255,255,255,0.94)"
-      rr(cx, cy, cw, ch, 40)
+      // app icon tile with brand gradient
+      const ix = cx + 34
+      const iy = cy + 40
+      const isz = 104
+      const ig = x.createLinearGradient(ix, iy, ix, iy + isz)
+      ig.addColorStop(0, n.c1)
+      ig.addColorStop(1, n.c2)
+      x.fillStyle = ig
+      rr(ix, iy, isz, isz, 26)
       x.fill()
-      x.fillStyle = "#eef2f8"
-      rr(cx + 30, cy + 40, 96, 96, 22)
-      x.fill()
-      x.font = "58px sans-serif"
+      x.font = "60px sans-serif"
       x.textAlign = "center"
-      x.fillText(n.icon, cx + 30 + 48, cy + 40 + 66)
+      x.textBaseline = "middle"
+      x.fillText(n.icon, ix + isz / 2, iy + isz / 2 + 4)
+      x.textBaseline = "alphabetic"
+
+      // title + time + message
+      const tx = ix + isz + 28
       x.textAlign = "left"
-      x.fillStyle = "#111"
-      x.font = "700 42px -apple-system, Arial, sans-serif"
-      x.fillText(n.title, cx + 152, cy + 78)
-      x.fillStyle = "#333"
-      x.font = "400 38px -apple-system, Arial, sans-serif"
+      x.fillStyle = "#0d0d0f"
+      x.font = "700 44px -apple-system, Arial, sans-serif"
+      x.fillText(n.title, tx, cy + 78)
+      x.fillStyle = "#9aa0ac"
+      x.textAlign = "right"
+      x.font = "500 32px -apple-system, Arial, sans-serif"
+      x.fillText("now", cx + cw - 34, cy + 74)
+      x.textAlign = "left"
+      x.fillStyle = "#3a3d44"
+      x.font = "400 40px -apple-system, Arial, sans-serif"
       const words = n.msg.split(" ")
       let line = ""
-      let ly = cy + 132
+      let ly = cy + 138
       for (const w of words) {
-        if (x.measureText(line + w).width > cw - 180) {
-          x.fillText(line.trim(), cx + 152, ly)
+        if (x.measureText(line + w).width > cw - isz - 90) {
+          x.fillText(line.trim(), tx, ly)
           line = w + " "
-          ly += 46
+          ly += 48
         } else line += w + " "
       }
-      x.fillText(line.trim(), cx + 152, ly)
-      x.fillStyle = "#8b93a3"
-      x.textAlign = "right"
-      x.font = "30px -apple-system, Arial, sans-serif"
-      x.fillText("now", cx + cw - 30, cy + 60)
+      x.fillText(line.trim(), tx, ly)
+
+      // flashlight + camera pills (iOS lock-screen feet)
+      x.fillStyle = "rgba(255,255,255,0.14)"
+      x.beginPath()
+      x.arc(96, H - 150, 46, 0, Math.PI * 2)
+      x.fill()
+      x.beginPath()
+      x.arc(W - 96, H - 150, 46, 0, Math.PI * 2)
+      x.fill()
+      x.fillStyle = "rgba(255,255,255,0.8)"
+      x.font = "40px sans-serif"
+      x.textAlign = "center"
+      x.fillText("🔦", 96, H - 136)
+      x.fillText("📷", W - 96, H - 136)
+
+      // home indicator
+      x.fillStyle = "rgba(255,255,255,0.85)"
+      rr(W / 2 - 96, H - 54, 192, 12, 6)
+      x.fill()
+
+      x.restore()
       tex.needsUpdate = true
     }
     draw(false, 0)
@@ -330,9 +418,9 @@ const STICKY_SIZE = 0.5
 const PHONE_POS: [number, number, number] = [2.35, 0.02, 2.5] // near (below) the coffee mug
 const PHONE_TWIST = -0.35
 const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, PHONE_TWIST] // lay flat on the desk
-const PHONE_SCREEN: [number, number] = [0.62, 1.35]
+const PHONE_SCREEN: [number, number] = [0.66, 1.52]
 // Local offset (in the phone's own space) placing the screen just above its face.
-const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.75, 0.07]
+const PHONE_SCREEN_OFFSET: [number, number, number] = [0, 0.76, 0.07]
 const FLOWER_POS: [number, number, number] = [-2.85, 0, -0.9]
 const LAMP_POS: [number, number, number] = [3.1, 0, -1.35]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
@@ -599,7 +687,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
           onPointerOut={() => (document.body.style.cursor = "")}
         >
           <planeGeometry args={PHONE_SCREEN} />
-          <meshBasicMaterial map={phoneScreen.texture} toneMapped={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial map={phoneScreen.texture} toneMapped={false} transparent side={THREE.DoubleSide} />
         </mesh>
       </group>
 
