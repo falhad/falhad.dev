@@ -434,7 +434,7 @@ const NOTEBOOK_ROT: [number, number, number] = [0, 0.5, 0]
 const STICKY_POS: [number, number, number] = [0.05, 0.19, 0]
 const STICKY_ROT: [number, number, number] = [-Math.PI / 2, 0, 0.25]
 const STICKY_SIZE = 0.5
-const PHONE_POS: [number, number, number] = [2.35, 0.02, 2.5] // near (below) the coffee mug
+const PHONE_POS: [number, number, number] = [2.35, 0.02, 1.95] // near (below) the coffee mug
 const PHONE_TWIST = -0.35
 const PHONE_ROT: [number, number, number] = [-Math.PI / 2, 0, PHONE_TWIST] // lay flat on the desk
 const PHONE_SCREEN: [number, number] = [0.675, 1.455] // matches the model's display area
@@ -640,7 +640,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
       s.position.z = Math.cos(ph * 3 + i * 2.1) * 0.11 * ph
       const sc = 0.16 + ph * 0.55
       s.scale.set(sc, sc * 1.35, sc)
-      ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.28
+      ;(s.material as THREE.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * 0.12
     })
   })
 
