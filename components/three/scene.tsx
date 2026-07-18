@@ -539,6 +539,54 @@ function Interactive({
   )
 }
 
+// Decorative hover reaction: a subtle lift + gentle wobble while hovered.
+function HoverMove({
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
+  lift = 0.06,
+  children,
+}: {
+  position?: [number, number, number]
+  rotation?: [number, number, number]
+  scale?: number
+  lift?: number
+  children: React.ReactNode
+}) {
+  const ref = useRef<THREE.Group>(null)
+  const hovered = useRef(false)
+  const baseY = position[1]
+  const baseRz = rotation[2] ?? 0
+  useFrame((s, dtRaw) => {
+    const g = ref.current
+    if (!g) return
+    const dt = Math.min(dtRaw, 0.05)
+    const ty = baseY + (hovered.current ? lift : 0)
+    g.position.y += (ty - g.position.y) * (1 - Math.pow(0.003, dt))
+    const rz = baseRz + (hovered.current ? Math.sin(s.clock.elapsedTime * 9) * 0.04 : 0)
+    g.rotation.z += (rz - g.rotation.z) * (1 - Math.pow(0.01, dt))
+  })
+  return (
+    <group
+      ref={ref}
+      position={position}
+      rotation={rotation}
+      scale={scale}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        hovered.current = true
+        document.body.style.cursor = "pointer"
+      }}
+      onPointerOut={() => {
+        hovered.current = false
+        document.body.style.cursor = ""
+      }}
+    >
+      {children}
+    </group>
+  )
+}
+
 // Drone parked left of the lamp. Hover → takes off and flies a loop over the
 // minions and the plant, then banks home. Keeps flying a few seconds after the
 // pointer leaves, finishes the lap, and lands back home.
@@ -781,7 +829,7 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
         ))}
       </group>
 
-      <group position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT}>
+      <HoverMove position={NOTEBOOK_POS} rotation={NOTEBOOK_ROT}>
         <primitive object={notebook} />
         {/* Small sticky note resting on top of the notebook cover. Uses a lit
             material so it goes dark with the room instead of glowing. */}
@@ -789,12 +837,16 @@ function Sequence({ onToggleLamp }: { onToggleLamp: () => void }) {
           <planeGeometry args={[STICKY_SIZE, STICKY_SIZE]} />
           <meshStandardMaterial map={stickyTex} roughness={0.95} metalness={0} />
         </mesh>
-      </group>
+      </HoverMove>
       <Interactive position={FLOWER_POS} onClick={onPlant}>
         <primitive object={flower} />
       </Interactive>
-      <primitive object={minions} position={MINIONS_POS} rotation={MINIONS_ROT} scale={MINIONS_SCALE} />
-      <primitive object={rubik} position={RUBIK_POS} rotation={RUBIK_ROT} />
+      <HoverMove position={MINIONS_POS} rotation={MINIONS_ROT} scale={MINIONS_SCALE}>
+        <primitive object={minions} />
+      </HoverMove>
+      <HoverMove position={RUBIK_POS} rotation={RUBIK_ROT}>
+        <primitive object={rubik} />
+      </HoverMove>
       <Drone />
       {/* Phone + its lock-screen overlay (child, so it tracks the phone exactly).
           Tap the screen to cycle notifications. */}
