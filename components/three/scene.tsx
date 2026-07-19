@@ -532,9 +532,13 @@ const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
 const SCREEN_SIZE: [number, number] = [2.46, 1.56]
 // "click me" lid sticky — pose on the CLOSED lid (laptop-group space). It's
 // re-parented to swing with the lid as it opens (see the hinge effect).
-const LID_STICKY_POS: [number, number, number] = [0.5, 0.33, 1.5]
+const LID_STICKY_POS: [number, number, number] = [0.5, 0.37, 1]
 const LID_STICKY_ROT: [number, number, number] = [-1.7, 0, -0.5]
 const LID_STICKY_SIZE = 0.6
+// Static note on the palm rest (no show/hide logic) — tune these by hand.
+const PALM_STICKY_POS: [number, number, number] = [-1, 0.17, 1]
+const PALM_STICKY_ROT: [number, number, number] = [-Math.PI / 2, 0, 0.12]
+const PALM_STICKY_SIZE = 0.5
 // The Bose speaker sits between the notebook (z 1.35) and the plant (z -0.9).
 const SPEAKER_POS: [number, number, number] = [-3.05, 0, -0.1]
 const SPEAKER_ROT: [number, number, number] = [0, 0.7, 0]
@@ -863,7 +867,7 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
   const nameMat = useRef<THREE.MeshBasicMaterial>(null)
   const macStickyMat = useRef<THREE.MeshStandardMaterial>(null)
   const lidStickyGroup = useRef<THREE.Group>(null)
-  const hingeSet = useRef(false)
+  const hingeV = useRef(new THREE.Vector3())
   const { pointer } = useThree()
   const px = useRef(0)
   const py = useRef(0)
@@ -924,6 +928,8 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
   const frontStickyTex = useMemo(() => FRONT_STICKIES.map((s) => makeStickyNote(s.lines, s.bg, s.fs)), [])
   // A "click me" note on the closed lid — nudges the visitor to open the Mac.
   const macStickyTex = useMemo(() => makeStickyNote(["do NOT touch!", "prod runs here…", "yes, a laptop"], "#fff27a", 60), [])
+  // Static palm-rest note — plain, placeholder text; edit lines/position by hand.
+  const palmStickyTex = useMemo(() => makeStickyNote(["edit me", ":)"], "#c9f2a7", 60), [])
   const deskBox = useMemo(() => new THREE.Box3().setFromObject(desk), [desk])
 
   const steamTex = useSteamTexture()
@@ -1045,16 +1051,14 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     if (laptop.current) laptop.current.rotation.y = px.current * 0.05 * (1 - pushT)
 
     // "click me" lid sticky — swing it with the lid so it feels stuck on.
+    // Recompute the hinge EVERY frame from settled matrices. (A one-time capture
+    // was unreliable: on a fresh load the first frame runs before the laptop's
+    // world matrix settles, locking in a wrong hinge → note in the wrong spot.)
     if (pivot && laptop.current && lidStickyGroup.current) {
-      if (!hingeSet.current) {
-        // Pin the wrapper to the lid hinge (in laptop-group space) and rebase the
-        // mesh offset, so the tuned pose stays put while rotation happens here.
-        const h = laptop.current.worldToLocal(pivot.getWorldPosition(new THREE.Vector3()))
-        lidStickyGroup.current.position.copy(h)
-        const mesh = lidStickyGroup.current.children[0]
-        if (mesh) mesh.position.set(LID_STICKY_POS[0] - h.x, LID_STICKY_POS[1] - h.y, LID_STICKY_POS[2] - h.z)
-        hingeSet.current = true
-      }
+      const h = laptop.current.worldToLocal(pivot.getWorldPosition(hingeV.current))
+      lidStickyGroup.current.position.copy(h)
+      const mesh = lidStickyGroup.current.children[0]
+      if (mesh) mesh.position.set(LID_STICKY_POS[0] - h.x, LID_STICKY_POS[1] - h.y, LID_STICKY_POS[2] - h.z)
       // Match the lid's rotation delta (0 when closed → swings as it opens).
       lidStickyGroup.current.rotation.x = pivot.rotation.x - LID_CLOSED
     }
@@ -1125,6 +1129,11 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
             <meshStandardMaterial ref={macStickyMat} map={macStickyTex} roughness={0.95} metalness={0} transparent />
           </mesh>
         </group>
+        {/* Static note on the palm rest — no show/hide logic; tune by hand. */}
+        <mesh position={PALM_STICKY_POS} rotation={PALM_STICKY_ROT}>
+          <planeGeometry args={[PALM_STICKY_SIZE, PALM_STICKY_SIZE]} />
+          <meshStandardMaterial map={palmStickyTex} roughness={0.95} metalness={0} />
+        </mesh>
       </group>
 
       <Interactive position={MUG_POS} onClick={onMug}>
