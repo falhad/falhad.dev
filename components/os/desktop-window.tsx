@@ -9,6 +9,7 @@ export type WinProps = {
   y: number
   z: number
   width: number
+  height?: number
   focused: boolean
   onFocus: (id: string) => void
   onClose: (id: string) => void
@@ -26,6 +27,7 @@ export default function DesktopWindow({
   y,
   z,
   width,
+  height,
   focused,
   onFocus,
   onClose,
@@ -41,7 +43,7 @@ export default function DesktopWindow({
 
   // Resize: track width/height locally; height stays auto until first resize.
   const winRef = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState<{ w: number; h: number | null }>({ w: width, h: null })
+  const [size, setSize] = useState<{ w: number; h: number | null }>({ w: width, h: height ?? null })
   const resize = useRef<{ sx: number; sy: number; sw: number; sh: number; dir: string } | null>(null)
   const onResizeDown = (dir: string) => (e: React.PointerEvent) => {
     e.stopPropagation()

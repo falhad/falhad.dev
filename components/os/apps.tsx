@@ -504,11 +504,12 @@ export type AppDef = {
   title: string
   icon: string
   width: number
+  height?: number
   Body: () => React.ReactElement
 }
 
 export const APPS: AppDef[] = [
-  { id: "about", title: "About Me — Notes", icon: "📝", width: 640, Body: AboutApp },
+  { id: "about", title: "About Me — Notes", icon: "📝", width: 900, height: 560, Body: AboutApp },
   { id: "work", title: "Selected Work — Safari", icon: "🧭", width: 760, Body: WorkApp },
   { id: "skills", title: "Skills — Launchpad", icon: "🚀", width: 680, Body: SkillsApp },
   { id: "journey", title: "Journey — Terminal", icon: "⌘", width: 720, Body: JourneyApp },

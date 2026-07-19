@@ -391,6 +391,7 @@ export default function Desktop() {
             if (!isPreview && !def) return null
             const title = isPreview ? `${previewFile?.name ?? "Preview"} — Preview` : def!.title
             const width = isPreview ? 720 : def!.width
+            const height = isPreview ? undefined : def!.height
             return (
               <DesktopWindow
                 key={w.id}
@@ -400,6 +401,7 @@ export default function Desktop() {
                 y={w.y}
                 z={w.z}
                 width={width}
+                height={height}
                 focused={w.id === topId}
                 onFocus={focus}
                 onClose={close}

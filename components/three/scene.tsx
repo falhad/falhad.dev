@@ -115,7 +115,8 @@ function useMacBook(size: number) {
 }
 
 
-// Pure-black screen showing the name + title in an Apple-style typeface.
+// The laptop screen: a macOS-style lock screen — wallpaper, clock, avatar, name
+// and a "Log In" button. Clicking the screen (see the mesh handler) logs in.
 const SF = '"SF Pro Display", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif'
 function useNameTexture() {
   return useMemo(() => {
@@ -125,28 +126,109 @@ function useNameTexture() {
     c.width = W
     c.height = H
     const x = c.getContext("2d")!
-    x.fillStyle = "#000000"
-    x.fillRect(0, 0, W, H)
-    x.textAlign = "center"
-    x.textBaseline = "middle"
-    // Name
-    x.fillStyle = "#ffffff"
-    x.font = `600 150px ${SF}`
-    x.fillText(profile.name, W / 2, H / 2 - 40)
-    // Title
-    x.fillStyle = "#8a8a8f"
-    x.font = `400 58px ${SF}`
-    if ("letterSpacing" in x) (x as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "3px"
-    x.fillText(profile.title, W / 2, H / 2 + 90)
-    // Hint near the bottom of the screen
-    if ("letterSpacing" in x) (x as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "6px"
-    x.fillStyle = "#6f6f76"
-    x.font = `500 34px ${SF}`
-    x.fillText("SCROLL OR CLICK TO EXPLORE ↓", W / 2, H - 90)
-    const t = new THREE.CanvasTexture(c)
-    t.anisotropy = 8
-    t.colorSpace = THREE.SRGBColorSpace
-    return t
+    const tex = new THREE.CanvasTexture(c)
+    tex.anisotropy = 8
+    tex.colorSpace = THREE.SRGBColorSpace
+
+    const rr = (px: number, py: number, w: number, h: number, r: number) => {
+      x.beginPath()
+      x.roundRect(px, py, w, h, r)
+    }
+
+    const draw = (avatar?: HTMLImageElement) => {
+      // Black wallpaper to match the screen, with a faint glow for depth.
+      x.fillStyle = "#000000"
+      x.fillRect(0, 0, W, H)
+      const glow = x.createRadialGradient(W / 2, 300, 40, W / 2, 300, 640)
+      glow.addColorStop(0, "rgba(90,110,170,0.14)")
+      glow.addColorStop(1, "rgba(90,110,170,0)")
+      x.fillStyle = glow
+      x.fillRect(0, 0, W, H)
+
+      x.textAlign = "center"
+      x.textBaseline = "middle"
+
+      // Live clock + date (top).
+      const now = new Date()
+      const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
+      x.fillStyle = "rgba(255,255,255,0.95)"
+      x.font = `250 168px ${SF}`
+      x.fillText(time, W / 2, 210)
+      x.fillStyle = "rgba(255,255,255,0.7)"
+      x.font = `500 40px ${SF}`
+      x.fillText(date, W / 2, 320)
+
+      // Avatar (circular). Falls back to a monogram until the photo loads.
+      const cx = W / 2
+      const cy = 560
+      const r = 108
+      x.save()
+      x.beginPath()
+      x.arc(cx, cy, r, 0, Math.PI * 2)
+      x.closePath()
+      x.clip()
+      if (avatar) {
+        x.drawImage(avatar, cx - r, cy - r, r * 2, r * 2)
+      } else {
+        x.fillStyle = "#3a465f"
+        x.fillRect(cx - r, cy - r, r * 2, r * 2)
+        x.fillStyle = "#dfe6f2"
+        x.font = `600 96px ${SF}`
+        x.fillText("FN", cx, cy + 6)
+      }
+      x.restore()
+      x.lineWidth = 3
+      x.strokeStyle = "rgba(255,255,255,0.25)"
+      x.beginPath()
+      x.arc(cx, cy, r, 0, Math.PI * 2)
+      x.stroke()
+
+      // Name + title.
+      x.fillStyle = "#ffffff"
+      x.font = `600 62px ${SF}`
+      x.fillText(profile.name, W / 2, 730)
+      x.fillStyle = "rgba(255,255,255,0.6)"
+      x.font = `400 36px ${SF}`
+      x.fillText(profile.title, W / 2, 788)
+
+      // Log In button (pill) — compact.
+      const bw = 210
+      const bh = 62
+      const bx = W / 2 - bw / 2
+      const by = 858
+      x.save()
+      x.shadowColor = "rgba(0,0,0,0.4)"
+      x.shadowBlur = 20
+      x.shadowOffsetY = 6
+      x.fillStyle = "rgba(255,255,255,0.95)"
+      rr(bx, by, bw, bh, bh / 2)
+      x.fill()
+      x.restore()
+      x.fillStyle = "#0a0a0a"
+      x.font = `600 30px ${SF}`
+      x.fillText("Log In  →", W / 2, by + bh / 2 + 2)
+
+      // Hint.
+      x.fillStyle = "rgba(255,255,255,0.4)"
+      x.font = `500 28px ${SF}`
+      x.fillText("click anywhere to continue", W / 2, 972)
+
+      tex.needsUpdate = true
+    }
+
+    // Keep the loaded portrait across redraws (the live clock redraws each second).
+    let avatarImg: HTMLImageElement | undefined
+    draw()
+    // Same-origin image only — a cross-origin avatar would taint the canvas.
+    const img = new Image()
+    img.onload = () => {
+      avatarImg = img
+      draw(avatarImg)
+    }
+    img.src = "/images/portrait.jpg"
+    setInterval(() => draw(avatarImg), 1000) // live clock
+    return tex
   }, [])
 }
 
@@ -529,7 +611,7 @@ const LAMP_POS: [number, number, number] = [3.1, 0, -0.7]
 const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
-const SCREEN_SIZE: [number, number] = [2.46, 1.56]
+const SCREEN_SIZE: [number, number] = [2.62, 1.66]
 // "click me" lid sticky — pose on the CLOSED lid (laptop-group space). It's
 // re-parented to swing with the lid as it opens (see the hinge effect).
 const LID_STICKY_POS: [number, number, number] = [0.5, 0.37, 1]
@@ -998,6 +1080,16 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     else window.scrollTo({ top: to, behavior: "smooth" })
   }
 
+  // Clicking the lock screen's "Log In" → advance to the desktop: scroll to the
+  // bottom of the hero, which triggers the dive-in + login flourish + desktop.
+  const login = () => {
+    const hero = document.getElementById("hero")
+    const to = hero ? hero.offsetTop + hero.offsetHeight - window.innerHeight : window.scrollY + window.innerHeight * 2
+    const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis
+    if (l) l.scrollTo(to, { duration: 1.6 })
+    else window.scrollTo({ top: to, behavior: "smooth" })
+  }
+
   useFrame((state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
     const hero = document.getElementById("hero")
@@ -1116,7 +1208,20 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
         onPointerOut={() => (document.body.style.cursor = "")}
       >
         <primitive object={macbook} />
-        <mesh position={SCREEN_POS} rotation={SCREEN_ROT}>
+        {/* Lock screen. Clicking it (the "Log In" button) advances to the desktop. */}
+        <mesh
+          position={SCREEN_POS}
+          rotation={SCREEN_ROT}
+          onClick={(e) => {
+            e.stopPropagation()
+            login()
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation()
+            document.body.style.cursor = "pointer"
+          }}
+          onPointerOut={() => (document.body.style.cursor = "")}
+        >
           <planeGeometry args={SCREEN_SIZE} />
           <meshBasicMaterial ref={nameMat} map={nameTex} transparent opacity={0} toneMapped={false} />
         </mesh>
