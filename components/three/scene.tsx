@@ -1,12 +1,12 @@
 "use client"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Environment, Lightformer, useGLTF, useAnimations } from "@react-three/drei"
-import { Suspense, useEffect, useMemo, useRef } from "react"
+import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js"
 import { profile } from "@/lib/portfolio-data"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
-import { playPop, startDrone, stopDrone } from "@/lib/sound"
+import { playPop, playClip, playMinion, startDrone, stopDrone, isSoundOn, setSoundOn, onSoundChange, unlockSound } from "@/lib/sound"
 
 const LAPTOP = "/models/macbook.glb" // user-supplied MacBook Pro
 const MUG = "/models/mug_latte.glb" // user-supplied (converted spec-gloss -> metal-rough)
@@ -18,6 +18,7 @@ const PHONE = "/models/phone.glb" // user-supplied (iPhone)
 const MINIONS = "/models/minions.glb" // user-supplied (3 minions on an iPad)
 const RUBIK = "/models/rubik.glb" // user-supplied
 const DRONE = "/models/drone.glb" // user-supplied (animated, spec-gloss→metalrough)
+const SPEAKER = "/models/bose_speaker.glb" // Bose SoundLink Mini II — the sound on/off switch
 const LID_NODE = "VCQqxpxkUlzqcJI_62" // MacBook lid/screen sub-assembly (17 meshes)
 const SCREEN_MESH = "Object_123" // the emissive display (lid) — recolored black so the name panel blends
 
@@ -481,6 +482,10 @@ const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
 const SCREEN_SIZE: [number, number] = [2.46, 1.56]
+// The Bose speaker sits between the notebook (z 1.35) and the plant (z -0.9).
+const SPEAKER_POS: [number, number, number] = [-3.05, 0, -0.1]
+const SPEAKER_ROT: [number, number, number] = [0, 0.7, 0]
+const SPEAKER_SIZE = 1.15
 
 // ---- Desk object personalities ----
 const MUG_LINES = [
@@ -603,9 +608,22 @@ const PHONE_QUIPS = [
   "PagerDuty at 3am. The phone giveth, the phone taketh sleep.",
 ]
 const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)]
+// Minion voice clips (all CC0 / royalty-free — see public/sounds/README.md).
+// One is picked at random on each minion tap.
+const MINION_SOUNDS = [
+  "/sounds/minions.mp3",
+  "/sounds/minions_voice.mp3",
+  "/sounds/minions_elo.mp3",
+  "/sounds/minions_hello.mp3",
+  "/sounds/minions_bello.mp3",
+  "/sounds/minions_banana.mp3",
+  "/sounds/minions_banana2.mp3",
+  "/sounds/minion_laugh.mp3",
+]
+const bubble = (text: string) => window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
 const quip = (text: string) => {
   playPop() // tiny blip on every desk-object tap
-  window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
+  bubble(text)
 }
 
 // A clickable desk object: pointer cursor on hover + a small pop on click.
@@ -836,6 +854,7 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     return obj
   }, [minionsGltf])
   const rubik = useAnchored(RUBIK, 0.38, "bottom")
+  const speaker = useAnchored(SPEAKER, SPEAKER_SIZE, "bottom", "max")
   const phoneScreen = usePhoneScreen()
   // Blacken the phone's emissive (glowing white) display so our lock-screen
   // content sits on a real black screen instead of looking like a floating layer.
@@ -864,13 +883,34 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
   const lampGlow = useRef(0)
   const sips = useRef(8)
 
+  // Sound on/off, mirrored into React state so the speaker's LED dot recolors.
+  const [soundOn, setSoundOnState] = useState(false)
+  useEffect(() => {
+    setSoundOnState(isSoundOn())
+    return onSoundChange(setSoundOnState)
+  }, [])
+  const onSpeaker = () => {
+    unlockSound()
+    const next = !isSoundOn()
+    setSoundOn(next)
+    if (next) playPop() // a blip confirms sound is now on
+  }
+
   const onMug = () => {
     sips.current -= 1
     quip(sips.current <= 0 ? MUG_EMPTY : pickLine(MUG_LINES))
     if (sips.current < 0) sips.current = 0
   }
   const onPlant = () => quip(pickLine(PLANT_LINES))
-  const onMinions = () => quip(pickLine(MINION_LINES))
+  const onMinions = () => {
+    // Minion tap: show a quip + play a RANDOM minion clip from /sounds. Falls
+    // back to a synthesized placeholder if a file is missing.
+    bubble(pickLine(MINION_LINES))
+    const url = MINION_SOUNDS[Math.floor(Math.random() * MINION_SOUNDS.length)]
+    playClip(url).then((ok) => {
+      if (!ok) playMinion()
+    })
+  }
   const onNotebook = () => quip(pickLine(NOTEBOOK_LINES))
   const onRubik = () => quip(pickLine(RUBIK_LINES))
   const onPhone = () => {
@@ -1016,6 +1056,15 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
       <Interactive position={FLOWER_POS} onClick={onPlant}>
         <primitive object={flower} />
       </Interactive>
+      {/* Bose speaker — the sound switch. Click to toggle; the LED dot on top
+          glows green when sound is on, red when off. */}
+      <HoverMove position={SPEAKER_POS} rotation={SPEAKER_ROT} onClick={onSpeaker}>
+        <primitive object={speaker} />
+        <mesh position={[-0.23, 0.32, 0.08]}>
+          <sphereGeometry args={[0.02, 20, 20]} />
+          <meshBasicMaterial color={soundOn ? "#22e06a" : "#ff3b30"} toneMapped={false} />
+        </mesh>
+      </HoverMove>
       <HoverMove position={MINIONS_POS} rotation={MINIONS_ROT} scale={MINIONS_SCALE} onClick={onMinions}>
         <primitive object={minions} />
       </HoverMove>
@@ -1169,6 +1218,7 @@ useGLTF.preload(PHONE)
 useGLTF.preload(MINIONS)
 useGLTF.preload(RUBIK)
 useGLTF.preload(DRONE)
+useGLTF.preload(SPEAKER)
 
 export default function Scene({ lampOn = true, onToggleLamp = () => { } }: { lampOn?: boolean; onToggleLamp?: () => void }) {
   const reduced = useReducedMotion()

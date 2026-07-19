@@ -5,7 +5,7 @@ import { isSoundOn, setSoundOn, onSoundChange, unlockSound } from "@/lib/sound"
 // Small fixed speaker toggle. Sound is ON by default; this lets the visitor
 // mute. Mirrors the retro replay link's style (bottom corner, subtle).
 export default function SoundToggle() {
-  const [on, setOn] = useState(true)
+  const [on, setOn] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

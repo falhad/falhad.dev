@@ -12,4 +12,5 @@ export const MODEL_URLS = [
   "/models/minions.glb",
   "/models/rubik.glb",
   "/models/drone.glb",
+  "/models/bose_speaker.glb",
 ] as const

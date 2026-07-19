@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
 import { profile } from "@/lib/portfolio-data"
-import { playModem, unlockSound } from "@/lib/sound"
+import { playModem, unlockSound, isSoundOn, setSoundOn, onSoundChange } from "@/lib/sound"
 
 const SEEN_KEY = "farhad.intro.seen"
 
@@ -20,8 +20,15 @@ type Phase = "page" | "dialup" | "crt" | "power" | "done"
 export default function RetroIntro() {
   const [mounted, setMounted] = useState(false)
   const [phase, setPhase] = useState<Phase>("done")
+  const [soundOn, setSoundOnState] = useState(false)
   const reduced = useReducedMotion()
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  // Keep the checkbox in sync with the global sound preference.
+  useEffect(() => {
+    setSoundOnState(isSoundOn())
+    return onSoundChange(setSoundOnState)
+  }, [])
 
   const after = useCallback((ms: number, fn: () => void) => {
     timers.current.push(setTimeout(fn, ms))
@@ -177,13 +184,24 @@ export default function RetroIntro() {
                 </button>
                 <span className="retro-point retro-point-r" aria-hidden>👈</span>
               </div>
+              <label className="retro-sound">
+                <input
+                  type="checkbox"
+                  checked={soundOn}
+                  onChange={(e) => {
+                    unlockSound()
+                    setSoundOn(e.target.checked)
+                  }}
+                />
+                🔊 Enable sound
+              </label>
               <p className="retro-copy">© 2011 Farhad · made with Notepad</p>
             </>
           ) : (
             /* dial-up upgrade screen */
             <div className="retro-dialup">
               <pre className="retro-term">
-{`> connecting to 2026 ...
+                {`> connecting to 2026 ...
 ~~~ kshhhh  CRRRK  bing bong  ~~~
 > handshake ok. downloading 23 years of updates`}
               </pre>
@@ -254,6 +272,12 @@ const RETRO_CSS = `
 #retro .retro-enter:hover { background: #0000c0; color: #66ffaa; }
 #retro .retro-enter:active { border-style: inset; box-shadow: none; transform: translateY(2px); }
 #retro .retro-copy { font-size: 11px; color: #555; margin-top: 18px; }
+#retro .retro-sound {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  margin: 14px auto 0; font-family: "Courier New", monospace; font-size: 13px;
+  color: #000080; cursor: pointer; user-select: none;
+}
+#retro .retro-sound input { width: 15px; height: 15px; cursor: pointer; accent-color: #000080; }
 #retro .retro-blink { animation: retro-blink 1s steps(1) infinite; }
 @keyframes retro-blink { 50% { opacity: 0; } }
 
