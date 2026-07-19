@@ -4,6 +4,7 @@ import Hero from "@/components/hero"
 import Desktop from "@/components/os/desktop"
 import RetroIntro from "@/components/retro/retro-intro"
 import ModelPreload from "@/components/three/model-preload"
+import SoundToggle from "@/components/ui/sound-toggle"
 
 export default function Home() {
   return (
@@ -17,6 +18,7 @@ export default function Home() {
         <Desktop />
       </main>
       <RetroIntro />
+      <SoundToggle />
     </SmoothScrollProvider>
   )
 }

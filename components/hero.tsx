@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { profile } from "@/lib/portfolio-data"
 import LampDialog from "@/components/hero/lamp-dialog"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
+import { playClick } from "@/lib/sound"
 
 // three touches window at module load — never server-render it.
 const Scene = dynamic(() => import("@/components/three/scene"), { ssr: false })
@@ -95,6 +96,7 @@ export default function Hero() {
   }, [reduced])
 
   const toggleLamp = useCallback(() => {
+    playClick() // switch click (also unlocks audio on the first gesture)
     const next = !lampRef.current
     lampRef.current = next
     setLampOn(next)

@@ -6,6 +6,7 @@ import * as THREE from "three"
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js"
 import { profile } from "@/lib/portfolio-data"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
+import { playPop, startDrone, stopDrone } from "@/lib/sound"
 
 const LAPTOP = "/models/macbook.glb" // user-supplied MacBook Pro
 const MUG = "/models/mug_latte.glb" // user-supplied (converted spec-gloss -> metal-rough)
@@ -602,7 +603,10 @@ const PHONE_QUIPS = [
   "PagerDuty at 3am. The phone giveth, the phone taketh sleep.",
 ]
 const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)]
-const quip = (text: string) => window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
+const quip = (text: string) => {
+  playPop() // tiny blip on every desk-object tap
+  window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
+}
 
 // A clickable desk object: pointer cursor on hover + a small pop on click.
 // No hover lift — objects stay planted on the desk.
@@ -733,6 +737,7 @@ function Drone() {
       flying.current = true
       dir.current = 1
       actions["hover"]?.reset().fadeIn(0.3).play()
+      startDrone() // motor whir while airborne
     }
   }
   // Don't cut the trip short — request landing; it finishes the full out-and-back
@@ -757,6 +762,7 @@ function Drone() {
         if (wantLand.current) {
           flying.current = false // completed the lap; land
           actions["hover"]?.fadeOut(0.8)
+          stopDrone() // fade out the motor whir
         } else {
           dir.current = 1 // another lap while still hovered
         }

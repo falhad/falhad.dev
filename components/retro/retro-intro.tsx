@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
 import { profile } from "@/lib/portfolio-data"
+import { playModem, unlockSound } from "@/lib/sound"
 
 const SEEN_KEY = "farhad.intro.seen"
 
@@ -54,10 +55,12 @@ export default function RetroIntro() {
 
   // The one real interaction: fast-forward to the present.
   const enter = useCallback(() => {
+    unlockSound() // first gesture — unlock audio
     if (reduced) {
       finish()
       return
     }
+    playModem() // the dial-up handshake screech, synced to the dialup phase
     setPhase("dialup")
     after(2000, () => setPhase("crt"))
     after(2650, () => {
