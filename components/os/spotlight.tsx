@@ -33,7 +33,7 @@ export default function Spotlight({ onOpenApp, onClose }: { onOpenApp: (id: stri
       onClose()
     }
     const actions: Item[] = [
-      { key: "resume", icon: "📄", label: "Résumé", hint: "Open the résumé page", run: go("/resume") },
+      { key: "resume", icon: "📄", label: "Resume", hint: "Open the resume page", run: go("/resume") },
       { key: "cv", icon: "⬇️", label: "Download CV", hint: "PDF", run: go("/files/cv.pdf") },
       { key: "email", icon: "✉️", label: "Email Farhad", hint: profile.email, run: go(`mailto:${profile.email}`) },
       { key: "linkedin", icon: "💼", label: "LinkedIn", hint: "in/farhadnava", run: go(profile.linkedin, true) },
@@ -84,7 +84,7 @@ export default function Spotlight({ onOpenApp, onClose }: { onOpenApp: (id: stri
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKey}
-            placeholder="Spotlight — search apps, résumé, contact…"
+            placeholder="Spotlight — search apps, resume, contact…"
             className="w-full bg-transparent py-4 text-base text-white outline-none placeholder:text-white/40"
           />
         </div>

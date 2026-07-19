@@ -8,6 +8,9 @@ export type Project = {
   description: string
   technologies: string[]
   links: { demo?: string; github?: string }
+  // Optional cover image (screenshot) shown in Selected Work. When absent, a
+  // branded gradient card is rendered instead.
+  image?: string
   // Position on the constellation, in world units. z is depth.
   position: [number, number, number]
   color: string // node hue
@@ -71,12 +74,35 @@ export const profile = {
 
 export const projects: Project[] = [
   {
+    name: "aiassist.chat",
+    tagline: "AI support widget SaaS",
+    description:
+      "AI customer-support chat widget — RAG over your own knowledge base, live analytics, and team tools. A self-built SaaS platform.",
+    technologies: ["Next.js", "Rust", "LLMs", "RAG"],
+    links: { demo: "https://aiassist.chat" },
+    image: "/images/projects/aiassist.jpg",
+    position: [0, 0, 0],
+    color: "#6366f1", // indigo
+  },
+  {
+    name: "ellix.ai",
+    tagline: "Generative-AI platform",
+    description:
+      "A generative-AI platform built in free time, exploring LLM-powered workflows and assistants.",
+    technologies: ["LLMs", "RAG", "Next.js"],
+    links: { demo: "https://ellix.ai" },
+    image: "/images/projects/ellix.jpg",
+    position: [0, 0, 0],
+    color: "#22d3ee", // cyan
+  },
+  {
     name: "AI Energy",
     tagline: "AI energy platform",
     description:
       "AI-powered energy platform with a scalable, event-driven backend (Python, async processing) and a modern Next.js frontend.",
     technologies: ["Python", "Async", "Event-driven", "Next.js"],
-    links: { demo: "https://demo.ai-energy.om" },
+    links: { demo: "https://nova.ai-energy.om" },
+    image: "/images/projects/ai-energy.jpg",
     position: [-2.9, 3.0, -2],
     color: "#e879f9", // fuchsia
   },
@@ -97,6 +123,7 @@ export const projects: Project[] = [
       "Flutter mobile app for digital restaurant menus, a proud partner of 14,000+ restaurants nationwide, improving customer experience and operational efficiency.",
     technologies: ["Flutter", "Dart"],
     links: { demo: "https://qmenu.us/" },
+    image: "/images/projects/qmenu.jpg",
     position: [4.4, 0.1, -2.5],
     color: "#f59e0b", // amber
   },
@@ -119,26 +146,6 @@ export const projects: Project[] = [
     links: {},
     position: [1.6, -3.0, -3],
     color: "#34d399", // emerald
-  },
-  {
-    name: "aiassist.chat",
-    tagline: "AI support widget SaaS",
-    description:
-      "AI customer-support chat widget — RAG over your own knowledge base, live analytics, and team tools. A self-built SaaS platform.",
-    technologies: ["Next.js", "Rust", "LLMs", "RAG"],
-    links: { demo: "https://aiassist.chat" },
-    position: [0, 0, 0],
-    color: "#6366f1", // indigo
-  },
-  {
-    name: "ellix.ai",
-    tagline: "Generative-AI platform",
-    description:
-      "A generative-AI platform built in free time, exploring LLM-powered workflows and assistants.",
-    technologies: ["LLMs", "RAG", "Next.js"],
-    links: { demo: "https://ellix.ai" },
-    position: [0, 0, 0],
-    color: "#22d3ee", // cyan
   },
 ]
 

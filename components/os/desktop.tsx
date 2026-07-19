@@ -3,9 +3,28 @@ import { useEffect, useRef, useState } from "react"
 import DesktopWindow from "@/components/os/desktop-window"
 import { APPS, type AppDef } from "@/components/os/apps"
 import Spotlight from "@/components/os/spotlight"
+import DeskNotifications, { type DeskNote } from "@/components/os/desk-notification"
 import { playPop } from "@/lib/sound"
 
 type Win = { id: string; x: number; y: number; z: number; min: boolean }
+
+// Playful, recruiter-friendly notifications that pop when a Dock app is opened.
+// Each nudges toward getting in touch. Clicking a banner opens the Contact app.
+const NOTE_LINES: { icon: string; app: string; title: string; body: string }[] = [
+  { icon: "🎯", app: "Recruiter Mode", title: "Great taste in candidates!", body: "Farhad is open to senior roles. Tap here to say hello." },
+  { icon: "🚀", app: "Portfolio", title: "14 years of shipping, one click away", body: "Imagine what he'd build for your team. Let's chat." },
+  { icon: "☕", app: "Farhad", title: "Coffee's on me", body: "If we build something great together. Tap to reach out." },
+  { icon: "🐛", app: "Stats", title: "Bug count dropping…", body: "Teams that hire Farhad ship faster. Results may vary 😉" },
+  { icon: "💼", app: "Opportunity", title: "Now hiring: your next great dev", body: "Spoiler — he's right here. Open Contact." },
+  { icon: "⚡", app: "Portfolio", title: "Fast learner, faster shipper", body: "Rust, AI/LLM, full-stack. Available now — let's talk." },
+  { icon: "🍌", app: "Minions HR", title: "The minions approve this candidate", body: "So will your team. Tap to get in touch." },
+  { icon: "📈", app: "Portfolio", title: "Best feature here? The developer.", body: "Open to work in Muscat or remote. Reach out anytime." },
+  { icon: "🤝", app: "Contact", title: "This could be the start of something", body: "One email and you've found your next senior engineer." },
+  { icon: "🔥", app: "Recruiter Mode", title: "Warning: high risk of wanting to hire", body: "Symptoms include emailing cs.arcxx@gmail.com." },
+  { icon: "✨", app: "Portfolio", title: "You scrolled, you clicked, you're impressed", body: "Let's make it official — tap to contact Farhad." },
+  { icon: "💡", app: "Pro Tip", title: "Don't let the good ones get away", body: "Farhad replies fast. Tap here to open Contact." },
+]
+const pickNote = () => NOTE_LINES[Math.floor(Math.random() * NOTE_LINES.length)]
 
 function Clock() {
   const [now, setNow] = useState("")
@@ -150,7 +169,28 @@ export default function Desktop() {
   const [boot, setBoot] = useState<"idle" | "running" | "done">("idle")
   const [mx, setMx] = useState<number | null>(null)
   const [spotlight, setSpotlight] = useState(false)
+  const [notes, setNotes] = useState<DeskNote[]>([])
+  const noteId = useRef(0)
+  const noteTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
   const zTop = useRef(10)
+
+  // Pop a random recruiter-friendly notification (only from Dock clicks). Fires
+  // ~1.2–1.9s after the click, like a real macOS push landing a beat later.
+  const notify = () => {
+    const t = setTimeout(() => {
+      noteTimers.current.delete(t)
+      const n = pickNote()
+      const id = ++noteId.current
+      setNotes((cur) => [...cur, { id, ...n }].slice(-3)) // keep at most 3 on screen
+    }, 1200 + Math.random() * 700)
+    noteTimers.current.add(t)
+  }
+  const dismissNote = (id: number) => setNotes((cur) => cur.filter((n) => n.id !== id))
+  // Clear pending notification timers on unmount.
+  useEffect(() => {
+    const timers = noteTimers.current
+    return () => timers.forEach(clearTimeout)
+  }, [])
   const bootRef = useRef<"idle" | "running" | "done">("idle")
 
   // Warm the login portrait into cache so it's decoded before the login shows.
@@ -248,6 +288,9 @@ export default function Desktop() {
     setMobileApp(null)
     setPreviewFile(null)
     setMobilePreview(false)
+    setNotes([])
+    noteTimers.current.forEach(clearTimeout)
+    noteTimers.current.clear()
     setHint(true)
     bootRef.current = "idle"
     setBoot("idle")
@@ -426,11 +469,18 @@ export default function Desktop() {
               a={a}
               mx={mx}
               active={openIds.has(a.id)}
-              onClick={() => (typeof window !== "undefined" && window.innerWidth < 768 ? setMobileApp(a.id) : open(a.id))}
+              onClick={() => {
+                if (typeof window !== "undefined" && window.innerWidth < 768) setMobileApp(a.id)
+                else open(a.id)
+                notify() // playful recruiter-friendly banner on every Dock click
+              }}
             />
           ))}
         </div>
       </div>
+
+      {/* ===== Recruiter-friendly notifications (Dock clicks) ===== */}
+      <DeskNotifications notes={notes} onDismiss={dismissNote} onAction={() => open("contact")} />
 
       {/* ===== Spotlight (⌘K) ===== */}
       {spotlight && boot === "done" ? <Spotlight onOpenApp={open} onClose={() => setSpotlight(false)} /> : null}

@@ -3,6 +3,7 @@ import {
   profile,
   stats,
   projects,
+  moreProjects,
   skills,
   experiences,
   education,
@@ -138,7 +139,18 @@ const SKILL_META: Record<string, IconDef> = {
 }
 
 const BIO =
-  "14+ years shipping high-impact systems — real-time rig monitoring for oil & gas, blockchain and crypto platforms, and LLM/RAG AI, leading teams from concept to deployment."
+  "I'm a senior software developer with 14+ years turning hard problems into shipped products — real-time rig monitoring for oil & gas, blockchain and crypto platforms, and AI/LLM systems with RAG. I've led teams from a blank repo to production and enjoy owning a feature end-to-end: backend, frontend, infra, and the messy bits in between."
+
+const BIO2 =
+  "I move fast without breaking things that matter, care about clean architecture and developer experience, and like shipping software people actually enjoy using — this site included."
+
+const ABOUT_BULLETS: string[] = [
+  "Full-stack across Rust, TypeScript/Next.js, Kotlin, Python & Spring Boot",
+  "AI/LLM apps: RAG pipelines, agents, vector search, evals",
+  "Real-time systems — WebRTC, sockets, live data at scale",
+  "From architecture & DevOps (Docker, CI/CD) to polished UI",
+  "Comfortable leading: mentoring, code review, and shipping to deadlines",
+]
 
 function hash(str: string) {
   let h = 0
@@ -149,7 +161,7 @@ function hash(str: string) {
 /* ---------------- About (Notes) ---------------- */
 export function AboutApp() {
   return (
-    <div className="grid sm:grid-cols-[190px_1fr]">
+    <div className="grid min-h-full sm:grid-cols-[190px_1fr]">
       <aside className="hidden border-r border-white/10 bg-white/[0.02] p-3 sm:block">
         <p className="section-label px-2 pb-2">iCloud</p>
         <div className="rounded-lg bg-[var(--terracotta)]/20 px-3 py-2">
@@ -162,9 +174,21 @@ export function AboutApp() {
         </div>
       </aside>
       <div className="p-7">
-        <p className="text-center text-xs text-muted-foreground">{profile.location}</p>
-        <h3 className="mt-3 font-display text-2xl font-semibold text-foreground">About Me</h3>
+        <p className="text-center text-xs text-muted-foreground">{profile.location} · {profile.title}</p>
+        <h3 className="mt-3 font-display text-2xl font-semibold text-foreground">Hi, I&apos;m Farhad 👋</h3>
         <p className="mt-4 text-[1.05rem] leading-relaxed text-muted-foreground">{BIO}</p>
+        <p className="mt-4 text-[1.05rem] leading-relaxed text-muted-foreground">{BIO2}</p>
+
+        <p className="mt-7 font-medium text-foreground">What I bring</p>
+        <ul className="mt-3 space-y-2">
+          {ABOUT_BULLETS.map((b) => (
+            <li key={b} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
+              <span className="mt-0.5 shrink-0 text-[var(--terracotta)]">▹</span>
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+
         <p className="mt-7 font-medium text-foreground">Highlights</p>
         <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-4">
           {stats.map((s) => (
@@ -173,6 +197,23 @@ export function AboutApp() {
               <div className="section-label mt-1">{s.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Open-to-work note with a soft nudge to reach out. */}
+        <div className="mt-8 rounded-xl border border-[var(--terracotta)]/30 bg-[var(--terracotta)]/10 p-4">
+          <p className="text-sm font-medium text-foreground">
+            <span aria-hidden>🟢</span> Open to senior roles — Muscat or remote worldwide
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Building something that needs a developer who ships? Let&apos;s talk.{" "}
+            <a href={`mailto:${profile.email}`} className="text-[var(--terracotta)] hover:underline" data-cursor="email">
+              {profile.email}
+            </a>{" "}
+            ·{" "}
+            <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-[var(--terracotta)] hover:underline">
+              LinkedIn
+            </a>
+          </p>
         </div>
       </div>
     </div>
@@ -183,6 +224,9 @@ export function AboutApp() {
 export function WorkApp() {
   return (
     <div className="p-5">
+      <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+        A few things I&apos;ve shipped — AI/LLM products, real-time systems, and platforms used by real people and teams. Click any card to open it live.
+      </p>
       <div className="grid gap-4 sm:grid-cols-2">
         {projects.map((p) => {
           const href = p.links.demo || p.links.github
@@ -192,10 +236,28 @@ export function WorkApp() {
                 className="relative aspect-[16/9]"
                 style={{ background: `radial-gradient(120% 120% at 30% 20%, ${p.color}22, transparent 60%), linear-gradient(160deg,#211d18,#14110d)` }}
               >
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="font-display text-xl font-semibold text-foreground/90">{p.name}</span>
-                  <span className="mt-1 text-xs text-[var(--terracotta)]">{p.tagline}</span>
-                </div>
+                {p.image ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.image}
+                      alt={`${p.name} — ${p.tagline}`}
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover object-top"
+                    />
+                    {/* Gradient scrim so the name/tagline stay legible over the shot. */}
+                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-3 text-left">
+                      <span className="font-display text-base font-semibold text-white drop-shadow">{p.name}</span>
+                      <span className="ml-2 text-xs text-[var(--terracotta)]">{p.tagline}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span className="font-display text-xl font-semibold text-foreground/90">{p.name}</span>
+                    <span className="mt-1 text-xs text-[var(--terracotta)]">{p.tagline}</span>
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <p className="text-sm leading-relaxed text-muted-foreground">{p.description}</p>
@@ -216,6 +278,20 @@ export function WorkApp() {
           )
         })}
       </div>
+
+      {/* The long tail of shipped work, kept compact. */}
+      <p className="mt-6 mb-2 section-label">Also shipped</p>
+      <div className="flex flex-wrap gap-1.5">
+        {moreProjects.map((m) => (
+          <span
+            key={m.name}
+            title={m.description}
+            className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground"
+          >
+            {m.name}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
@@ -224,6 +300,9 @@ export function WorkApp() {
 export function SkillsApp() {
   return (
     <div className="grid gap-y-9 p-8">
+      <p className="-mb-2 text-center text-sm leading-relaxed text-muted-foreground">
+        The toolkit — battle-tested in production, not just on a résumé. Depth in the top rows, breadth everywhere else.
+      </p>
       {skills.map((group) => (
         <div key={group.category}>
           <h3 className="section-label mb-5 text-center text-foreground">{group.category}</h3>
@@ -275,6 +354,18 @@ export function JourneyApp() {
           <p className="text-muted-foreground">   {ed.institution} · {ed.location} · {ed.date}</p>
         </div>
       ))}
+
+      <p className="mt-6"><span className="text-muted-foreground">➜</span> ~/career <span className="text-[#8fb6ff]">ls</span> certifications/</p>
+      <div className="mt-2 pl-4">
+        {certifications.map((c) => (
+          <p key={c.name} className="text-muted-foreground">📜 {c.name} <span className="text-foreground/70">— {c.label}</span></p>
+        ))}
+      </div>
+
+      <p className="mt-6"><span className="text-muted-foreground">➜</span> ~/career <span className="text-[#8fb6ff]">whoami</span> --status</p>
+      <p className="mt-2 text-foreground/90">🟢 Open to senior roles · Muscat or remote · <span className="text-[var(--terracotta)]">available now</span></p>
+      <p className="text-muted-foreground">   Hiring? Run: <span className="text-foreground">mailto {profile.email}</span></p>
+
       <p className="mt-6"><span className="text-muted-foreground">➜</span> ~/career <span className="animate-pulse">▋</span></p>
     </div>
   )
@@ -331,11 +422,11 @@ function FileGrid({ files }: { files: F[] }) {
   )
 }
 export function FinderApp() {
-  const cv: F = { icon: "📄", name: "Farhad Navayazdan — CV.pdf", meta: "Résumé", src: "/files/cv.pdf" }
+  const cv: F = { icon: "📄", name: "Farhad Navayazdan — CV.pdf", meta: "Resume", src: "/files/cv.pdf" }
   const certs: F[] = certifications.map((c) => ({ icon: "📜", name: c.name, meta: c.label, src: localFile(c.url), href: c.url }))
   const aw: F[] = awards.map((a) => ({ icon: "🏆", name: a.title, meta: [a.description, a.years?.join(" / ")].filter(Boolean).join(" · ") || undefined, src: localFile(a.url), href: a.url }))
   return (
-    <div className="grid sm:grid-cols-[170px_1fr]">
+    <div className="grid min-h-full sm:grid-cols-[170px_1fr]">
       <aside className="hidden border-r border-white/10 bg-white/[0.02] p-3 text-sm sm:block">
         <p className="section-label px-2 pb-2">Favorites</p>
         <p className="px-3 py-1.5 text-foreground/90">📄 CV</p>
@@ -366,9 +457,19 @@ export function ContactApp() {
         <p className="text-muted-foreground">To: <span className="text-foreground">{profile.email}</span></p>
         <p className="text-muted-foreground">Subject: <span className="text-foreground">Let&apos;s build something</span></p>
       </div>
+
       <p className="mt-5 text-[1.05rem] leading-relaxed text-muted-foreground">
-        The channel is open — real-time systems, blockchain, AI, or just to talk shop. Reach me anywhere below.
+        The channel is open — a role, a project, real-time systems, blockchain, AI, or just to talk shop. I read everything and usually reply within a day.
       </p>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--terracotta)]/15 px-3 py-1 font-medium text-[var(--terracotta)]">
+          <span aria-hidden>🟢</span> Open to work
+        </span>
+        <span className="rounded-full border border-white/10 px-3 py-1 text-muted-foreground">📍 {profile.location} · remote worldwide</span>
+        <span className="rounded-full border border-white/10 px-3 py-1 text-muted-foreground">🕓 GST (UTC+4)</span>
+      </div>
+
       <div className="mt-6 grid grid-cols-2 gap-4">
         {links.map((l) => (
           <a key={l.label} href={l.href} target={l.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" data-cursor="open" className="group rounded-lg border border-white/10 bg-white/[0.02] p-3">
@@ -376,6 +477,22 @@ export function ContactApp() {
             <div className="mt-1 truncate text-foreground group-hover:text-[var(--terracotta)]">{l.text}</div>
           </a>
         ))}
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        <a
+          href={`mailto:${profile.email}?subject=${encodeURIComponent("Let's build something")}`}
+          data-cursor="email"
+          className="rounded-full bg-[var(--terracotta)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        >
+          ✉️ Email me
+        </a>
+        <a href="/resume" data-cursor="open" className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground/80 hover:border-[var(--terracotta)] hover:text-foreground">
+          📄 View resume
+        </a>
+        <a href="/files/cv.pdf" download data-cursor="download" className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground/80 hover:border-[var(--terracotta)] hover:text-foreground">
+          ↓ Download CV
+        </a>
       </div>
     </div>
   )

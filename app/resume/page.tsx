@@ -12,16 +12,16 @@ import {
 } from "@/lib/portfolio-data"
 import ResumeActions from "@/components/resume/resume-actions"
 
-// A plain, server-rendered résumé — selectable text, real headings and lists,
+// A plain, server-rendered resume — selectable text, real headings and lists,
 // so it's readable by ATS scanners and search engines (unlike the 3D scene and
 // the PDF). Doubles as the fast path for recruiters who won't scroll the desk.
 export const metadata: Metadata = {
-  title: "Résumé",
+  title: "Resume",
   description:
-    "Résumé of Farhad Navayazdan — Senior Software Developer & Software Engineer in Muscat, Oman. 14+ years across AI/LLM, RAG, real-time systems, blockchain, and full-stack web & mobile.",
+    "Resume of Farhad Navayazdan — Senior Software Developer & Software Engineer in Muscat, Oman. 14+ years across AI/LLM, RAG, real-time systems, blockchain, and full-stack web & mobile.",
   alternates: { canonical: "/resume" },
   openGraph: {
-    title: "Farhad Navayazdan — Résumé",
+    title: "Farhad Navayazdan — Resume",
     description: "Senior Software Developer & Software Engineer · Muscat, Oman · 14+ years · AI/LLM, Rust, Next.js.",
     url: "/resume",
   },

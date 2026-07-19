@@ -164,7 +164,7 @@ export default function RetroIntro() {
                     <td><a href={profile.github} target="_blank" rel="noopener noreferrer">@falhad</a></td>
                   </tr>
                   <tr>
-                    <td>📄 Résumé</td>
+                    <td>📄 Resume</td>
                     <td><a href="/files/cv.pdf" download data-cursor="download">» download my CV «</a></td>
                   </tr>
                 </tbody>

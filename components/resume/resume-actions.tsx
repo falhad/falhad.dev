@@ -1,7 +1,7 @@
 "use client"
 import { profile } from "@/lib/portfolio-data"
 
-// Print / Download / Back controls for the résumé page. Hidden when printing.
+// Print / Download / Back controls for the resume page. Hidden when printing.
 export default function ResumeActions() {
   return (
     <div className="no-print flex flex-wrap items-center gap-3">
