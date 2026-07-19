@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react"
 import DesktopWindow from "@/components/os/desktop-window"
 import { APPS, type AppDef } from "@/components/os/apps"
+import Spotlight from "@/components/os/spotlight"
+import { playPop } from "@/lib/sound"
 
 type Win = { id: string; x: number; y: number; z: number; min: boolean }
 
@@ -147,6 +149,7 @@ export default function Desktop() {
   const [reveal, setReveal] = useState(0)
   const [boot, setBoot] = useState<"idle" | "running" | "done">("idle")
   const [mx, setMx] = useState<number | null>(null)
+  const [spotlight, setSpotlight] = useState(false)
   const zTop = useRef(10)
   const bootRef = useRef<"idle" | "running" | "done">("idle")
 
@@ -158,6 +161,7 @@ export default function Desktop() {
 
   const open = (id: string) => {
     setHint(false)
+    playPop() // soft feedback on window open (no-op unless sound is enabled)
     setWins((ws) => {
       if (ws.some((w) => w.id === id)) return ws.map((w) => (w.id === id ? { ...w, z: ++zTop.current, min: false } : w))
       const n = ws.length
@@ -171,6 +175,56 @@ export default function Desktop() {
   const minimize = (id: string) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, min: true } : w)))
   const focus = (id: string) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, z: ++zTop.current } : w)))
   const move = (id: string, x: number, y: number) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, x, y } : w)))
+
+  // Keep a live handle on the windows for the keyboard handler.
+  const winsRef = useRef<Win[]>([])
+  winsRef.current = wins
+  const topOpenId = () => winsRef.current.filter((w) => !w.min).sort((a, b) => b.z - a.z)[0]?.id
+
+  // macOS keyboard shortcuts (only once "logged in"). ⌘K opens Spotlight;
+  // Esc closes Spotlight or the front window; ⌘M minimizes it; ⌘1–6 open apps.
+  useEffect(() => {
+    if (boot !== "done") return
+    const onKey = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey
+      if (meta && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setSpotlight((s) => !s)
+        return
+      }
+      if (e.key === "Escape") {
+        if (spotlight) {
+          setSpotlight(false)
+          return
+        }
+        const t = topOpenId()
+        if (t) {
+          e.preventDefault()
+          close(t)
+        }
+        return
+      }
+      if (spotlight) return // let Spotlight own the rest while it's open
+      if (meta && e.key.toLowerCase() === "m") {
+        const t = topOpenId()
+        if (t) {
+          e.preventDefault()
+          minimize(t)
+        }
+        return
+      }
+      if (meta && /^[1-6]$/.test(e.key)) {
+        const a = APPS[Number(e.key) - 1]
+        if (a) {
+          e.preventDefault()
+          open(a.id)
+        }
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boot, spotlight])
 
   // Finder files ask to open here via a window event, so any app body can
   // trigger the Preview window without prop-drilling.
@@ -257,6 +311,15 @@ export default function Desktop() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setSpotlight((s) => !s)}
+            aria-label="Open Spotlight search"
+            data-cursor="search"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-foreground/75 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <span aria-hidden>🔍</span>
+            <span className="hidden text-[0.7rem] text-muted-foreground sm:inline">⌘K</span>
+          </button>
           <StatusIcons />
           <button
             onClick={logout}
@@ -368,6 +431,9 @@ export default function Desktop() {
           ))}
         </div>
       </div>
+
+      {/* ===== Spotlight (⌘K) ===== */}
+      {spotlight && boot === "done" ? <Spotlight onOpenApp={open} onClose={() => setSpotlight(false)} /> : null}
 
       {/* ===== Login flourish ===== */}
       {boot !== "done" ? <BootScreen running={boot === "running"} /> : null}
