@@ -532,7 +532,7 @@ const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
 const SCREEN_SIZE: [number, number] = [2.46, 1.56]
 // "click me" lid sticky — pose on the CLOSED lid (laptop-group space). It's
 // re-parented to swing with the lid as it opens (see the hinge effect).
-const LID_STICKY_POS: [number, number, number] = [0.5, 0.34, 1.7]
+const LID_STICKY_POS: [number, number, number] = [0.5, 0.33, 1.5]
 const LID_STICKY_ROT: [number, number, number] = [-1.7, 0, -0.5]
 const LID_STICKY_SIZE = 0.6
 // The Bose speaker sits between the notebook (z 1.35) and the plant (z -0.9).
@@ -923,7 +923,7 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
   // Front-facing sticky notes + the desk bounds used to place them on its face.
   const frontStickyTex = useMemo(() => FRONT_STICKIES.map((s) => makeStickyNote(s.lines, s.bg, s.fs)), [])
   // A "click me" note on the closed lid — nudges the visitor to open the Mac.
-  const macStickyTex = useMemo(() => makeStickyNote(["Don't touch me!", "Production is running", "on this machine!"], "#fff27a", 60), [])
+  const macStickyTex = useMemo(() => makeStickyNote(["do NOT touch!", "prod runs here…", "yes, a laptop"], "#fff27a", 60), [])
   const deskBox = useMemo(() => new THREE.Box3().setFromObject(desk), [desk])
 
   const steamTex = useSteamTexture()
