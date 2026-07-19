@@ -927,9 +927,9 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
   // Front-facing sticky notes + the desk bounds used to place them on its face.
   const frontStickyTex = useMemo(() => FRONT_STICKIES.map((s) => makeStickyNote(s.lines, s.bg, s.fs)), [])
   // A "click me" note on the closed lid — nudges the visitor to open the Mac.
-  const macStickyTex = useMemo(() => makeStickyNote(["do NOT touch!", "prod runs here…", "yes, a laptop"], "#fff27a", 60), [])
-  // Static palm-rest note — plain, placeholder text; edit lines/position by hand.
-  const palmStickyTex = useMemo(() => makeStickyNote(["edit me", ":)"], "#c9f2a7", 60), [])
+  const macStickyTex = useMemo(() => makeStickyNote(["do NOT touch!", "prod runs here…", "yes, a laptop"], "#ff6b6b", 60), [])
+  // Static palm-rest note — a cheeky follow-up once the lid's open.
+  const palmStickyTex = useMemo(() => makeStickyNote(["couldn't stop you?", "fine — at least", "don't go further"], "#c9f2a7", 60), [])
   const deskBox = useMemo(() => new THREE.Box3().setFromObject(desk), [desk])
 
   const steamTex = useSteamTexture()
