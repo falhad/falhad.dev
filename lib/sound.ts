@@ -214,6 +214,69 @@ export async function playClip(url: string, volume = 0.9): Promise<boolean> {
   return true
 }
 
+// --- Per-object clip channels ------------------------------------------------
+// A "channel" plays at most one clip at a time. Tapping an object again while
+// its clip is still playing does NOT overlap — it queues the next clip (only
+// one deep; the latest tap wins) to start the moment the current clip ends.
+type Channel = { busy: boolean; nextUrl: string | null; nextVol: number; nextFallback?: () => void }
+const channels = new Map<string, Channel>()
+
+async function runChannel(id: string, ch: Channel, url: string, volume: number, fallback?: () => void) {
+  const c = ac()
+  if (!c || !master || !enabled) {
+    ch.busy = false
+    return
+  }
+  ch.busy = true // claim synchronously so a rapid second tap queues, not overlaps
+  const startNext = () => {
+    ch.busy = false
+    if (ch.nextUrl) {
+      const u = ch.nextUrl
+      const v = ch.nextVol
+      const f = ch.nextFallback
+      ch.nextUrl = null
+      ch.nextFallback = undefined
+      void runChannel(id, ch, u, v, f)
+    }
+  }
+  const buf = await loadClip(url)
+  if (!enabled || !master || !c) {
+    ch.busy = false
+    return
+  }
+  if (!buf) {
+    fallback?.() // synth fallback has no "ended" event; free the channel now
+    startNext()
+    return
+  }
+  const src = c.createBufferSource()
+  src.buffer = buf
+  const g = c.createGain()
+  g.gain.value = volume
+  src.connect(g).connect(master)
+  src.onended = startNext
+  src.start()
+}
+
+// Play `url` on a named channel. If the channel is busy, queue it as the single
+// pending clip (latest tap wins) instead of overlapping the current one.
+export function playClipOn(channelId: string, url: string, volume = 0.9, fallback?: () => void): void {
+  const c = ac()
+  if (!c || !master || !enabled) return
+  let ch = channels.get(channelId)
+  if (!ch) {
+    ch = { busy: false, nextUrl: null, nextVol: volume }
+    channels.set(channelId, ch)
+  }
+  if (ch.busy) {
+    ch.nextUrl = url
+    ch.nextVol = volume
+    ch.nextFallback = fallback
+    return
+  }
+  void runChannel(channelId, ch, url, volume, fallback)
+}
+
 // Synthesized "minion gibberish" — a placeholder until a licensed clip is added.
 // Three high, pitch-bent vowel-ish blips through a formant-ish bandpass.
 export function playMinion(): void {
@@ -286,7 +349,7 @@ export function startDrone(): void {
       const src = c.createBufferSource()
       src.buffer = takeoff
       const g = c.createGain()
-      g.gain.value = 0.85
+      g.gain.value = 0.4
       src.connect(g).connect(master)
       src.start(t0)
       stops.push((now) => {
@@ -308,7 +371,7 @@ export function startDrone(): void {
       // Fade in under the tail of the spin-up so the handoff is seamless.
       const start = takeoff ? t0 + TAKEOFF_HANDOFF : t0
       g.gain.setValueAtTime(0.0001, start)
-      g.gain.exponentialRampToValueAtTime(0.55, start + 0.5)
+      g.gain.exponentialRampToValueAtTime(0.28, start + 0.5)
       src.connect(g).connect(master)
       src.start(start)
       stops.push((now) => {

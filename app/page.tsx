@@ -5,6 +5,7 @@ import Desktop from "@/components/os/desktop"
 import RetroIntro from "@/components/retro/retro-intro"
 import ModelPreload from "@/components/three/model-preload"
 import SoundToggle from "@/components/ui/sound-toggle"
+import HireCta from "@/components/hire-cta"
 
 export default function Home() {
   return (
@@ -19,6 +20,7 @@ export default function Home() {
       </main>
       <RetroIntro />
       <SoundToggle />
+      <HireCta />
     </SmoothScrollProvider>
   )
 }

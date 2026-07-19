@@ -6,7 +6,7 @@ import * as THREE from "three"
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js"
 import { profile } from "@/lib/portfolio-data"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
-import { playPop, playClip, playMinion, startDrone, stopDrone, isSoundOn, setSoundOn, onSoundChange, unlockSound, MINION_SOUNDS, MUG_SOUND, RUBIK_SOUND, SPEAKER_SOUND } from "@/lib/sound"
+import { playPop, playClip, playClipOn, playMinion, startDrone, stopDrone, isSoundOn, setSoundOn, onSoundChange, unlockSound, MINION_SOUNDS, MUG_SOUND, RUBIK_SOUND, SPEAKER_SOUND } from "@/lib/sound"
 
 const LAPTOP = "/models/macbook.glb" // user-supplied MacBook Pro
 const MUG = "/models/mug_latte.glb" // user-supplied (converted spec-gloss -> metal-rough)
@@ -902,9 +902,8 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
       return
     }
     bubble(pickLine(MUG_LINES))
-    playClip(MUG_SOUND).then((ok) => {
-      if (!ok) playPop() // clip missing → fall back to the generic tap blip
-    })
+    // One sip at a time — a second tap while sipping queues the next, no overlap.
+    playClipOn("mug", MUG_SOUND, 0.9, playPop)
   }
   const onPlant = () => quip(pickLine(PLANT_LINES))
   const onMinions = () => {
@@ -912,16 +911,13 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     // back to a synthesized placeholder if a file is missing.
     bubble(pickLine(MINION_LINES))
     const url = MINION_SOUNDS[Math.floor(Math.random() * MINION_SOUNDS.length)]
-    playClip(url).then((ok) => {
-      if (!ok) playMinion()
-    })
+    // No overlap: a tap mid-clip queues the next random voice instead of stacking.
+    playClipOn("minions", url, 0.9, playMinion)
   }
   const onNotebook = () => quip(pickLine(NOTEBOOK_LINES))
   const onRubik = () => {
     bubble(pickLine(RUBIK_LINES))
-    playClip(RUBIK_SOUND).then((ok) => {
-      if (!ok) playPop()
-    })
+    playClipOn("rubik", RUBIK_SOUND, 0.9, playPop)
   }
   const onPhone = () => {
     phoneScreen.tap()

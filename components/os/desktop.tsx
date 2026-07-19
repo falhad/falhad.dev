@@ -86,14 +86,25 @@ function PreviewBody({ name, src }: { name: string; src: string }) {
     <div className="flex min-h-full flex-col">
       <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-[#17140f]/80 px-4 py-2 backdrop-blur-xl">
         <span className="truncate text-xs text-foreground/70">{name}</span>
-        <a
-          href={src}
-          download
-          data-cursor="download"
-          className="shrink-0 rounded-md border border-white/15 bg-white/[0.06] px-2.5 py-1 text-xs text-foreground/85 transition-colors hover:bg-white/15 hover:text-white"
-        >
-          ↓ Download
-        </a>
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href={src}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cursor="pointer"
+            className="rounded-md border border-white/15 bg-white/[0.06] px-2.5 py-1 text-xs text-foreground/85 transition-colors hover:bg-white/15 hover:text-white"
+          >
+            ↗ Open in new tab
+          </a>
+          <a
+            href={src}
+            download
+            data-cursor="download"
+            className="rounded-md border border-white/15 bg-white/[0.06] px-2.5 py-1 text-xs text-foreground/85 transition-colors hover:bg-white/15 hover:text-white"
+          >
+            ↓ Download
+          </a>
+        </div>
       </div>
       <div className="min-h-0 flex-1 bg-[#0d0b09] p-3">
         {isPdf ? (
