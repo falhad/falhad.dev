@@ -778,6 +778,13 @@ function Drone() {
         takeOff()
       }}
       onPointerOut={requestLand}
+      onClick={(e) => {
+        // Tap-to-fly for touch devices (no hover): take off, then land after
+        // completing one full out-and-back lap.
+        e.stopPropagation()
+        takeOff()
+        wantLand.current = true
+      }}
     >
       <primitive object={model} />
     </group>
