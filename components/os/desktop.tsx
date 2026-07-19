@@ -10,19 +10,22 @@ type Win = { id: string; x: number; y: number; z: number; min: boolean }
 
 // Playful, recruiter-friendly notifications that pop when a Dock app is opened.
 // Each nudges toward getting in touch. Clicking a banner opens the Contact app.
+// Notifications landing on Farhad's own machine — the visitor "overhears" the
+// inbound interest (social proof) rather than being pitched. Tapping any banner
+// opens Contact, so the visitor quietly becomes one of these messages.
 const NOTE_LINES: { icon: string; app: string; title: string; body: string }[] = [
-  { icon: "🎯", app: "Recruiter Mode", title: "Great taste in candidates!", body: "Farhad is open to senior roles. Tap here to say hello." },
-  { icon: "🚀", app: "Portfolio", title: "14 years of shipping, one click away", body: "Imagine what he'd build for your team. Let's chat." },
-  { icon: "☕", app: "Farhad", title: "Coffee's on me", body: "If we build something great together. Tap to reach out." },
-  { icon: "🐛", app: "Stats", title: "Bug count dropping…", body: "Teams that hire Farhad ship faster. Results may vary 😉" },
-  { icon: "💼", app: "Opportunity", title: "Now hiring: your next great dev", body: "Spoiler — he's right here. Open Contact." },
-  { icon: "⚡", app: "Portfolio", title: "Fast learner, faster shipper", body: "Rust, AI/LLM, full-stack. Available now — let's talk." },
-  { icon: "🍌", app: "Minions HR", title: "The minions approve this candidate", body: "So will your team. Tap to get in touch." },
-  { icon: "📈", app: "Portfolio", title: "Best feature here? The developer.", body: "Open to work in Muscat or remote. Reach out anytime." },
-  { icon: "🤝", app: "Contact", title: "This could be the start of something", body: "One email and you've found your next senior engineer." },
-  { icon: "🔥", app: "Recruiter Mode", title: "Warning: high risk of wanting to hire", body: "Symptoms include emailing cs.arcxx@gmail.com." },
-  { icon: "✨", app: "Portfolio", title: "You scrolled, you clicked, you're impressed", body: "Let's make it official — tap to contact Farhad." },
-  { icon: "💡", app: "Pro Tip", title: "Don't let the good ones get away", body: "Farhad replies fast. Tap here to open Contact." },
+  { icon: "💬", app: "Messages", title: "Recruiter", body: "“Are you open to new opportunities?” · seen 👀" },
+  { icon: "💼", app: "LinkedIn", title: "You appeared in 47 recruiter searches", body: "…this week. It's getting busy in here." },
+  { icon: "📧", app: "Mail", title: "Re: Senior Engineer role", body: "“When could we schedule a chat?”" },
+  { icon: "⭐", app: "GitHub", title: "Your work got noticed — again", body: "Someone just starred a few of your repos." },
+  { icon: "📅", app: "Calendar", title: "Intro call · 3:00 PM", body: "Another team would like to talk." },
+  { icon: "💬", app: "Slack", title: "The team loved the demo", body: "“So… can we get this person?”" },
+  { icon: "🤝", app: "LinkedIn", title: "5 new connection requests", body: "Mostly hiring managers, apparently." },
+  { icon: "🔥", app: "Recruiters", title: "Your name keeps coming up", body: "Good problems to have." },
+  { icon: "📈", app: "LinkedIn", title: "Profile views up 60% this week", body: "People are looking." },
+  { icon: "☕", app: "Mail", title: "Coffee to talk about a role?", body: "Third invite this month." },
+  { icon: "👀", app: "Messages", title: "“Is he still available?”", body: "For now 😉" },
+  { icon: "✨", app: "Mail", title: "“We think you'd be a great fit”", body: "The inbox has opinions." },
 ]
 const pickNote = () => NOTE_LINES[Math.floor(Math.random() * NOTE_LINES.length)]
 

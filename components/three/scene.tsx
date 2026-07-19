@@ -204,6 +204,54 @@ function useStickyTexture() {
   }, [])
 }
 
+// A small sticky note: centered handwritten lines on a colored square.
+// Uses a readable handwriting font (Chalkboard SE / Comic Sans / Marker Felt)
+// and auto-fits so the longest line (e.g. the email) stays on the note.
+function makeStickyNote(lines: string[], bg: string, maxFs = 104) {
+  const S = 512
+  const c = document.createElement("canvas")
+  c.width = S
+  c.height = S
+  const x = c.getContext("2d")!
+  x.fillStyle = bg
+  x.fillRect(0, 0, S, S)
+  const g = x.createLinearGradient(0, 0, S, S)
+  g.addColorStop(0, "rgba(255,255,255,0.30)")
+  g.addColorStop(1, "rgba(0,0,0,0.09)")
+  x.fillStyle = g
+  x.fillRect(0, 0, S, S)
+
+  x.fillStyle = "#2b2410"
+  x.textAlign = "center"
+  x.textBaseline = "middle"
+  const font = (px: number) => `600 ${px}px "Chalkboard SE", "Comic Sans MS", "Marker Felt", cursive`
+  // Auto-fit: shrink so the widest line fits, and all lines fit vertically.
+  let fs = Math.min(lines.length > 2 ? 82 : 104, maxFs)
+  const maxW = S * 0.86
+  x.font = font(fs)
+  const widest = Math.max(...lines.map((l) => x.measureText(l).width))
+  if (widest > maxW) fs = Math.floor((fs * maxW) / widest)
+  fs = Math.min(fs, Math.floor((S * 0.82) / (lines.length * 1.2)))
+  x.font = font(fs)
+
+  const lh = fs * 1.2
+  const startY = S / 2 - ((lines.length - 1) * lh) / 2
+  lines.forEach((l, i) => x.fillText(l, S / 2, startY + i * lh))
+
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.anisotropy = 8
+  return tex
+}
+
+// Sticky notes clustered on the left of the desk's front apron (facing the
+// visitor). Understated dev-personality lines + a contact card.
+const FRONT_STICKIES: { lines: string[]; bg: string; x: number; rot: number; fs?: number }[] = [
+  { lines: ["deploy on", "Friday"], bg: "#fff27a", x: -3.35, rot: 0.06, fs: 72 },
+  { lines: ["ship >", "perfect"], bg: "#ffb3c7", x: -2.68, rot: -0.06, fs: 72 },
+  { lines: ["email:", "cs.arcxx@gmail.com", "whatsapp:", "+968 90130747"], bg: "#a7d8ff", x: -2.02, rot: 0.05 },
+]
+
 // The phone's lock screen — a canvas texture. Off (black) by default; flashes on
 // with a live clock + a rotating notification, and taps advance it too.
 function usePhoneScreen() {
@@ -482,6 +530,11 @@ const LAMP_ROT: [number, number, number] = [0, -0.5, 0]
 const SCREEN_POS: [number, number, number] = [0, 1.13, -0.04]
 const SCREEN_ROT: [number, number, number] = [-0.16, 0, 0]
 const SCREEN_SIZE: [number, number] = [2.46, 1.56]
+// "click me" lid sticky — pose on the CLOSED lid (laptop-group space). It's
+// re-parented to swing with the lid as it opens (see the hinge effect).
+const LID_STICKY_POS: [number, number, number] = [0.5, 0.34, 1.7]
+const LID_STICKY_ROT: [number, number, number] = [-1.7, 0, -0.5]
+const LID_STICKY_SIZE = 0.6
 // The Bose speaker sits between the notebook (z 1.35) and the plant (z -0.9).
 const SPEAKER_POS: [number, number, number] = [-3.05, 0, -0.1]
 const SPEAKER_ROT: [number, number, number] = [0, 0.7, 0]
@@ -808,6 +861,9 @@ function Drone() {
 function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () => void }) {
   const laptop = useRef<THREE.Group>(null)
   const nameMat = useRef<THREE.MeshBasicMaterial>(null)
+  const macStickyMat = useRef<THREE.MeshStandardMaterial>(null)
+  const lidStickyGroup = useRef<THREE.Group>(null)
+  const hingeSet = useRef(false)
   const { pointer } = useThree()
   const px = useRef(0)
   const py = useRef(0)
@@ -864,6 +920,11 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
   }, [phone])
   const nameTex = useNameTexture()
   const stickyTex = useStickyTexture()
+  // Front-facing sticky notes + the desk bounds used to place them on its face.
+  const frontStickyTex = useMemo(() => FRONT_STICKIES.map((s) => makeStickyNote(s.lines, s.bg, s.fs)), [])
+  // A "click me" note on the closed lid — nudges the visitor to open the Mac.
+  const macStickyTex = useMemo(() => makeStickyNote(["Don't touch me!", "Production is running", "on this machine!"], "#fff27a", 60), [])
+  const deskBox = useMemo(() => new THREE.Box3().setFromObject(desk), [desk])
 
   const steamTex = useSteamTexture()
 
@@ -983,6 +1044,23 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     if (pivot) pivot.rotation.x = lerp(LID_CLOSED, 0, smooth(invlerp(p, 0.15, 0.6)))
     if (laptop.current) laptop.current.rotation.y = px.current * 0.05 * (1 - pushT)
 
+    // "click me" lid sticky — swing it with the lid so it feels stuck on.
+    if (pivot && laptop.current && lidStickyGroup.current) {
+      if (!hingeSet.current) {
+        // Pin the wrapper to the lid hinge (in laptop-group space) and rebase the
+        // mesh offset, so the tuned pose stays put while rotation happens here.
+        const h = laptop.current.worldToLocal(pivot.getWorldPosition(new THREE.Vector3()))
+        lidStickyGroup.current.position.copy(h)
+        const mesh = lidStickyGroup.current.children[0]
+        if (mesh) mesh.position.set(LID_STICKY_POS[0] - h.x, LID_STICKY_POS[1] - h.y, LID_STICKY_POS[2] - h.z)
+        hingeSet.current = true
+      }
+      // Match the lid's rotation delta (0 when closed → swings as it opens).
+      lidStickyGroup.current.rotation.x = pivot.rotation.x - LID_CLOSED
+    }
+    // Gentle fade as the lid turns away (backface culling also hides it).
+    if (macStickyMat.current) macStickyMat.current.opacity = 1 - smooth(invlerp(p, 0.32, 0.5))
+
     // Name fades onto the screen once the lid opens, then fades back out as the
     // camera pushes into the (black) screen — so the transition ends in black.
     if (nameMat.current) {
@@ -1016,6 +1094,13 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
   return (
     <group>
       <primitive object={desk} position={[0, 0, 0]} />
+      {/* Sticky notes stuck to the desk's front face, facing the visitor. */}
+      {FRONT_STICKIES.map((s, i) => (
+        <mesh key={i} position={[s.x, deskBox.max.y - 0.55, deskBox.max.z + 0.02]} rotation={[0, 0, s.rot]}>
+          <planeGeometry args={[0.62, 0.62]} />
+          <meshStandardMaterial map={frontStickyTex[i]} roughness={0.95} metalness={0} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
       <group
         ref={laptop}
         position={[0, 0, 0]}
@@ -1031,6 +1116,15 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
           <planeGeometry args={SCREEN_SIZE} />
           <meshBasicMaterial ref={nameMat} map={nameTex} transparent opacity={0} toneMapped={false} />
         </mesh>
+        {/* "click me" sticky — inside a group pinned to the lid hinge so it
+            swings open with the lid (rotation driven in useFrame). The mesh's
+            own pose is its resting pose on the CLOSED lid. */}
+        <group ref={lidStickyGroup}>
+          <mesh position={LID_STICKY_POS} rotation={LID_STICKY_ROT}>
+            <planeGeometry args={[LID_STICKY_SIZE, LID_STICKY_SIZE]} />
+            <meshStandardMaterial ref={macStickyMat} map={macStickyTex} roughness={0.95} metalness={0} transparent />
+          </mesh>
+        </group>
       </group>
 
       <Interactive position={MUG_POS} onClick={onMug}>
