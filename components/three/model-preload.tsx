@@ -1,6 +1,7 @@
 "use client"
 import { useEffect } from "react"
 import { MODEL_URLS } from "@/lib/models"
+import { preloadClips } from "@/lib/sound"
 
 // Warms the HTTP cache with the 3D models the moment the site loads — while the
 // retro "2011" overlay is still up. By the time the visitor fast-forwards and
@@ -27,7 +28,19 @@ export default function ModelPreload() {
       document.head.appendChild(link)
       links.push(link)
     }
-    return () => links.forEach((l) => l.remove())
+    // Warm the audio clips too, so tapping a desk object plays instantly rather
+    // than waiting on a download. This only fetches bytes — decoding needs an
+    // AudioContext and happens on first play, inside a user gesture.
+    // Deferred to idle so it never competes with the models or first paint.
+    const idle =
+      window.requestIdleCallback?.(() => preloadClips(), { timeout: 4000 }) ??
+      window.setTimeout(() => preloadClips(), 1200)
+
+    return () => {
+      links.forEach((l) => l.remove())
+      if (window.cancelIdleCallback && typeof idle === "number") window.cancelIdleCallback(idle)
+      else clearTimeout(idle as number)
+    }
   }, [])
 
   return null

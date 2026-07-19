@@ -121,25 +121,90 @@ export function playPop(): void {
   o.stop(t + 0.14)
 }
 
-// Play an audio file (mp3/ogg/wav) from /public. Fetched + decoded once, then
-// cached. Returns true if it played, false if missing/unavailable — the caller
-// can then fall back to a synthesized sound.
+// --- Clip loading -----------------------------------------------------------
+// Two caches. `rawCache` holds the downloaded bytes and needs no AudioContext,
+// so it can be filled during the retro intro before the visitor has interacted
+// (a context created before a gesture would just be suspended). `clipCache`
+// holds the decoded buffers, which do need a context.
 const clipCache = new Map<string, AudioBuffer | null>()
+const rawCache = new Map<string, ArrayBuffer | null>()
+const inflight = new Map<string, Promise<ArrayBuffer | null>>()
+
+// Every clip the site can play — used to warm the cache up front.
+export const MINION_SOUNDS = [
+  "/sounds/minions.mp3",
+  "/sounds/minions_voice.mp3",
+  "/sounds/minions_elo.mp3",
+  "/sounds/minions_hello.mp3",
+  "/sounds/minions_bello.mp3",
+  "/sounds/minions_banana.mp3",
+  "/sounds/minions_banana2.mp3",
+  "/sounds/minion_laugh.mp3",
+]
+const DRONE_TAKEOFF = "/sounds/drone_takeoff.mp3"
+const DRONE_FLIGHT = "/sounds/drone_flight.mp3"
+export const MUG_SOUND = "/sounds/mug_sip.mp3"
+export const RUBIK_SOUND = "/sounds/rubik_twist.mp3"
+export const SPEAKER_SOUND = "/sounds/speaker_on.mp3"
+export const ALL_CLIPS = [...MINION_SOUNDS, DRONE_TAKEOFF, DRONE_FLIGHT, MUG_SOUND, RUBIK_SOUND, SPEAKER_SOUND]
+
+// Download (but don't decode) a clip's bytes. Safe to call before any user
+// gesture. Concurrent calls for the same url share one request.
+function fetchRaw(url: string): Promise<ArrayBuffer | null> {
+  const cached = rawCache.get(url)
+  if (cached !== undefined) return Promise.resolve(cached)
+  const pending = inflight.get(url)
+  if (pending) return pending
+  const req = fetch(url)
+    .then((res) => (res.ok ? res.arrayBuffer() : null))
+    .catch(() => null)
+    .then((buf) => {
+      rawCache.set(url, buf)
+      inflight.delete(url)
+      return buf
+    })
+  inflight.set(url, req)
+  return req
+}
+
+// Warm the byte cache for every clip, so the first tap plays instantly instead
+// of waiting on a download. Call this while the retro intro is still up.
+export function preloadClips(urls: string[] = ALL_CLIPS): void {
+  for (const url of urls) void fetchRaw(url)
+}
+
+// Resolve a clip to a decoded AudioBuffer, using prefetched bytes when present.
+// Returns null if the file is missing or won't decode (remembered, not retried).
+async function loadClip(url: string): Promise<AudioBuffer | null> {
+  const c = ac()
+  if (!c) return null
+  const decoded = clipCache.get(url)
+  if (decoded !== undefined) return decoded
+  const raw = await fetchRaw(url)
+  if (!raw) {
+    clipCache.set(url, null)
+    return null
+  }
+  let buf: AudioBuffer | null
+  try {
+    // decodeAudioData detaches its input, so hand it a copy — the raw bytes
+    // stay cached for any later re-decode.
+    buf = await c.decodeAudioData(raw.slice(0))
+  } catch {
+    buf = null
+  }
+  clipCache.set(url, buf)
+  return buf
+}
+
+// Play an audio file (mp3/ogg/wav) from /public. Returns true if it played,
+// false if missing/unavailable — the caller can then fall back to a
+// synthesized sound.
 export async function playClip(url: string, volume = 0.9): Promise<boolean> {
   const c = ac()
   if (!c || !master || !enabled) return false
-  let buf = clipCache.get(url)
-  if (buf === undefined) {
-    try {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error("missing")
-      buf = await c.decodeAudioData(await res.arrayBuffer())
-    } catch {
-      buf = null // 404 or decode failure → remember so we don't retry
-    }
-    clipCache.set(url, buf)
-  }
-  if (!buf || !enabled) return false
+  const buf = await loadClip(url)
+  if (!buf || !enabled || !master) return false
   const src = c.createBufferSource()
   src.buffer = buf
   const g = c.createGain()
@@ -179,9 +244,88 @@ export function playMinion(): void {
   }
 }
 
-// Looping drone motor whir. Returns a stop() that fades it out.
+// --- Drone audio ------------------------------------------------------------
+// Two CC-BY clips by GeorgeHopkins (see public/sounds/README.md): a one-shot
+// spin-up, then a seamless loop for the flight. The loop is crossfade-wrapped
+// so it has no audible seam. Falls back to the synth whir below if either
+// file is missing or the decode fails.
+const TAKEOFF_HANDOFF = 1.9 // s into the spin-up where the loop fades in
+
 let droneNodes: { stop: () => void } | null = null
+// Bumped on every start/stop so a slow decode from a previous takeoff can tell
+// it has been superseded and must not start playing late.
+let droneRun = 0
+
 export function startDrone(): void {
+  const c = ac()
+  if (!c || !master || !enabled || droneNodes) return
+  const run = ++droneRun
+  // Claim the slot synchronously — two rapid taps must not stack two loops.
+  let cancelled = false
+  const stops: Array<(t: number) => void> = []
+  droneNodes = {
+    stop: () => {
+      cancelled = true
+      const now = c.currentTime
+      stops.forEach((s) => s(now))
+    },
+  }
+
+  void (async () => {
+    const [takeoff, flight] = await Promise.all([loadClip(DRONE_TAKEOFF), loadClip(DRONE_FLIGHT)])
+    if (cancelled || run !== droneRun || !master) return
+    if (!takeoff && !flight) {
+      // Both clips unavailable — fall back to the synthesized whir.
+      if (droneNodes) droneNodes = null
+      startSynthDrone()
+      return
+    }
+    const t0 = c.currentTime + 0.02
+
+    if (takeoff) {
+      const src = c.createBufferSource()
+      src.buffer = takeoff
+      const g = c.createGain()
+      g.gain.value = 0.85
+      src.connect(g).connect(master)
+      src.start(t0)
+      stops.push((now) => {
+        g.gain.cancelScheduledValues(now)
+        g.gain.setTargetAtTime(0.0001, now, 0.18)
+        try {
+          src.stop(now + 0.9)
+        } catch {
+          /* already stopped */
+        }
+      })
+    }
+
+    if (flight) {
+      const src = c.createBufferSource()
+      src.buffer = flight
+      src.loop = true
+      const g = c.createGain()
+      // Fade in under the tail of the spin-up so the handoff is seamless.
+      const start = takeoff ? t0 + TAKEOFF_HANDOFF : t0
+      g.gain.setValueAtTime(0.0001, start)
+      g.gain.exponentialRampToValueAtTime(0.55, start + 0.5)
+      src.connect(g).connect(master)
+      src.start(start)
+      stops.push((now) => {
+        g.gain.cancelScheduledValues(now)
+        g.gain.setTargetAtTime(0.0001, now, 0.18)
+        try {
+          src.stop(now + 0.9)
+        } catch {
+          /* already stopped */
+        }
+      })
+    }
+  })()
+}
+
+// Synthesized rotor whir — the fallback when the clips can't be loaded.
+function startSynthDrone(): void {
   const c = ac()
   if (!c || !master || !enabled || droneNodes) return
   const t = c.currentTime
@@ -220,6 +364,7 @@ export function startDrone(): void {
   }
 }
 export function stopDrone(): void {
+  droneRun++ // supersede any takeoff still waiting on its decode
   if (!droneNodes) return
   droneNodes.stop()
   droneNodes = null

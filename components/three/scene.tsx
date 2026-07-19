@@ -6,7 +6,7 @@ import * as THREE from "three"
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js"
 import { profile } from "@/lib/portfolio-data"
 import { useReducedMotion } from "@/lib/use-reduced-motion"
-import { playPop, playClip, playMinion, startDrone, stopDrone, isSoundOn, setSoundOn, onSoundChange, unlockSound } from "@/lib/sound"
+import { playPop, playClip, playMinion, startDrone, stopDrone, isSoundOn, setSoundOn, onSoundChange, unlockSound, MINION_SOUNDS, MUG_SOUND, RUBIK_SOUND, SPEAKER_SOUND } from "@/lib/sound"
 
 const LAPTOP = "/models/macbook.glb" // user-supplied MacBook Pro
 const MUG = "/models/mug_latte.glb" // user-supplied (converted spec-gloss -> metal-rough)
@@ -610,16 +610,6 @@ const PHONE_QUIPS = [
 const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)]
 // Minion voice clips (all CC0 / royalty-free — see public/sounds/README.md).
 // One is picked at random on each minion tap.
-const MINION_SOUNDS = [
-  "/sounds/minions.mp3",
-  "/sounds/minions_voice.mp3",
-  "/sounds/minions_elo.mp3",
-  "/sounds/minions_hello.mp3",
-  "/sounds/minions_bello.mp3",
-  "/sounds/minions_banana.mp3",
-  "/sounds/minions_banana2.mp3",
-  "/sounds/minion_laugh.mp3",
-]
 const bubble = (text: string) => window.dispatchEvent(new CustomEvent("desk-bubble", { detail: { text } }))
 const quip = (text: string) => {
   playPop() // tiny blip on every desk-object tap
@@ -893,13 +883,28 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     unlockSound()
     const next = !isSoundOn()
     setSoundOn(next)
-    if (next) playPop() // a blip confirms sound is now on
+    // Turning on plays the Bose pairing chime, so the speaker confirms itself.
+    // Turning off stays silent — sound is already muted by then anyway.
+    if (next) {
+      playClip(SPEAKER_SOUND).then((ok) => {
+        if (!ok) playPop()
+      })
+    }
   }
 
   const onMug = () => {
     sips.current -= 1
-    quip(sips.current <= 0 ? MUG_EMPTY : pickLine(MUG_LINES))
+    const empty = sips.current <= 0
     if (sips.current < 0) sips.current = 0
+    // An empty mug gets the plain blip — sipping air would be odd.
+    if (empty) {
+      quip(MUG_EMPTY)
+      return
+    }
+    bubble(pickLine(MUG_LINES))
+    playClip(MUG_SOUND).then((ok) => {
+      if (!ok) playPop() // clip missing → fall back to the generic tap blip
+    })
   }
   const onPlant = () => quip(pickLine(PLANT_LINES))
   const onMinions = () => {
@@ -912,7 +917,12 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     })
   }
   const onNotebook = () => quip(pickLine(NOTEBOOK_LINES))
-  const onRubik = () => quip(pickLine(RUBIK_LINES))
+  const onRubik = () => {
+    bubble(pickLine(RUBIK_LINES))
+    playClip(RUBIK_SOUND).then((ok) => {
+      if (!ok) playPop()
+    })
+  }
   const onPhone = () => {
     phoneScreen.tap()
     quip(pickLine(PHONE_QUIPS))
