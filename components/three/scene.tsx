@@ -1,7 +1,6 @@
 "use client"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { Environment, useGLTF, useAnimations } from "@react-three/drei"
-import { EffectComposer, Bloom } from "@react-three/postprocessing"
+import { Environment, Lightformer, useGLTF, useAnimations } from "@react-three/drei"
 import { Suspense, useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js"
@@ -815,6 +814,10 @@ function Sequence({ lampOn, onToggleLamp }: { lampOn: boolean; onToggleLamp: () 
     obj.traverse((n) => {
       const m = n as THREE.Mesh
       if (!m.isMesh) return
+      // Unlit glTF carries no normals (nothing needs them), so the converted
+      // lit material shaded to pure black. Rebuild them or the minions render
+      // as flat silhouettes.
+      if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals()
       m.material = Array.isArray(m.material) ? m.material.map(toLit) : toLit(m.material)
     })
     return obj
@@ -1073,6 +1076,9 @@ function Lights({ lampOn }: { lampOn: boolean }) {
   const hemi = useRef<THREE.HemisphereLight>(null)
   const fill = useRef<THREE.DirectionalLight>(null)
   const moon = useRef<THREE.SpotLight>(null)
+  const nightAmb = useRef<THREE.AmbientLight>(null)
+  const nightKey = useRef<THREE.DirectionalLight>(null)
+  const nightRim = useRef<THREE.DirectionalLight>(null)
   const lvl = useRef(lampOn ? 1 : 0)
   const LAMP_RAMP = 1.0 // seconds for the light to fully turn on/off
   useFrame((state, dtRaw) => {
@@ -1082,27 +1088,37 @@ function Lights({ lampOn }: { lampOn: boolean }) {
     const step = dt / LAMP_RAMP
     lvl.current = clamp(lvl.current + clamp(target - lvl.current, -step, step), 0, 1)
     const l = smooth(lvl.current)
-    // Dark: a small global floor so the WHOLE desk reads as dim (not pure black)
-    // even when the camera is pulled back on mobile — plus the moon cone for the
-    // dramatic pool of light on the center. Lit: warm room-wide fill on top.
-    if (amb.current) amb.current.intensity = 0.07 + 0.9 * l
-    if (hemi.current) hemi.current.intensity = 0.07 + 1.0 * l
+    const dark = 1 - l
+    // Lamp-on: warm room-wide light.
+    if (amb.current) amb.current.intensity = 0.85 * l
+    if (hemi.current) hemi.current.intensity = 1.0 * l
     if (fill.current) fill.current.intensity = 0.72 * l
     if (spot.current) spot.current.intensity = 58 * l
-    if (moon.current) moon.current.intensity = 7 * (1 - l)
-    // Fade the environment HDR with the lamp instead of popping it in. The dark
-    // floor (0.09) is what lights the desk edges outside the moon cone.
-    state.scene.environmentIntensity = 0.09 + 0.61 * l
+    // Lamp-off: a cool "moonlit room" rig that is dim but always legible. Every
+    // model stays readable from any camera distance — the lamp adds warmth and
+    // contrast rather than being the difference between visible and invisible.
+    if (nightAmb.current) nightAmb.current.intensity = 0.2 * dark
+    if (nightKey.current) nightKey.current.intensity = 0.42 * dark
+    if (nightRim.current) nightRim.current.intensity = 0.18 * dark
+    if (moon.current) moon.current.intensity = 5 * dark
+    // Environment fill. The dark floor is deliberately non-zero so materials
+    // still catch a highlight with the lamp off.
+    state.scene.environmentIntensity = 0.15 + 0.65 * l
   })
   return (
     <>
       {/* Warmer ambient/fill so lamp-on feels cozy, not clinical. */}
-      <ambientLight ref={amb} intensity={0.02} color="#d19a5c" />
+      <ambientLight ref={amb} intensity={0} color="#d19a5c" />
       <hemisphereLight ref={hemi} intensity={0} color="#ffe7bd" groundColor="#2a1f14" />
       <directionalLight ref={fill} position={[-4, 6, 4]} intensity={0} color="#ffdca0" />
-      {/* Faint cool "moonlight" cone aimed at the laptop — grazes the lamp, laptop
-          and mug so those read in the dark while the rest stays black. Fades out
-          as the lamp turns on. */}
+      {/* --- Lamp-off rig: dim, cool, but never black. --- */}
+      <ambientLight ref={nightAmb} intensity={0} color="#93a9c4" />
+      {/* Key from the viewer's side so the front faces of every desk object read. */}
+      <directionalLight ref={nightKey} position={[2.5, 5, 7]} intensity={0} color="#aabfd8" />
+      {/* Opposing rim so silhouettes separate from the background. */}
+      <directionalLight ref={nightRim} position={[-5, 4, -4]} intensity={0} color="#6f86a8" />
+      {/* Faint cool "moonlight" cone aimed at the laptop — keeps the dramatic
+          pool of light on the center. Fades out as the lamp turns on. */}
       <spotLight
         ref={moon}
         position={[1.4, 5, 1.6]}
@@ -1157,18 +1173,37 @@ export default function Scene({ lampOn = true, onToggleLamp = () => { } }: { lam
   }
   return (
     <div className="absolute inset-0" aria-hidden>
-      <Canvas shadows camera={{ position: [0, 8.0, 2.6], fov: 42 }} dpr={[1, 1.9]} gl={{ antialias: true, alpha: true, toneMappingExposure: 0.78 }}>
+      <Canvas shadows camera={{ position: [0, 8.0, 2.6], fov: 42 }} dpr={[1, 1.9]} gl={{ antialias: true, alpha: true, toneMappingExposure: 0.92 }}>
         {/* Lamp-driven room lighting (dark until the switch is clicked). */}
         <Lights lampOn={lampOn} />
+        {/* Room reflections/ambient fill. Built procedurally from lightformers
+            instead of drei's `preset`, which downloads a multi-MB .hdr from a
+            third-party CDN — slow or blocked on mobile/other networks, which
+            left the scene unlit everywhere except a browser that had it cached.
+            This renders locally, so every device gets identical lighting. */}
+        <Environment resolution={128} frames={1}>
+          {/* soft overhead ceiling panel */}
+          <Lightformer intensity={1.6} form="rect" position={[0, 6, 1]} rotation={[-Math.PI / 2, 0, 0]} scale={[14, 10, 1]} color="#fff2df" />
+          {/* window-ish key from the viewer's left */}
+          <Lightformer intensity={1.1} form="rect" position={[-7, 3, 5]} rotation={[0, -Math.PI / 3, 0]} scale={[9, 7, 1]} color="#cfe0f5" />
+          {/* warm bounce from the lamp side */}
+          <Lightformer intensity={0.9} form="rect" position={[7, 2.5, 2]} rotation={[0, Math.PI / 2.4, 0]} scale={[8, 6, 1]} color="#ffd9a6" />
+          {/* rear rim so silhouettes separate */}
+          <Lightformer intensity={0.7} form="rect" position={[0, 3, -8]} rotation={[0, Math.PI, 0]} scale={[12, 6, 1]} color="#9fb2cc" />
+          {/* dim floor bounce */}
+          <Lightformer intensity={0.35} form="rect" position={[0, -4, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[12, 12, 1]} color="#4a3f36" />
+        </Environment>
         <Suspense fallback={null}>
           <Sequence lampOn={lampOn} onToggleLamp={onToggleLamp} />
-          {/* The environment HDR is the room's ambient fill — kill it entirely
-              when the lamp is off so the room actually goes dark. */}
-          <Environment preset="apartment" />
         </Suspense>
-        <EffectComposer>
-          <Bloom intensity={0.1} luminanceThreshold={0.92} luminanceSmoothing={0.9} mipmapBlur />
-        </EffectComposer>
+        {/* NOTE: deliberately no <EffectComposer>/<Bloom> here.
+            postprocessing's composer allocates a HalfFloat render target and
+            drives its own tone-mapping pass. On GPUs without float-blend /
+            EXT_color_buffer_half_float support — most Android devices, iOS, and
+            Mesa on Linux — that target resolves to black, so the entire scene
+            rendered as flat black silhouettes while Apple GPUs (the only place
+            it was ever tested) looked fine. The bloom was intensity 0.1 and
+            barely perceptible; correctness on every device is worth far more. */}
       </Canvas>
     </div>
   )
